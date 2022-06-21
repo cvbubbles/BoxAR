@@ -150,6 +150,7 @@
     <ClCompile Include="impl_cvrender.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="tests\test_trackers.cpp" />
+    <ClCompile Include="tools\gen_box_model.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\base.h" />

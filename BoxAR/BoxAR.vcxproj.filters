@@ -19,6 +19,9 @@
     <Filter Include="tests">
       <UniqueIdentifier>{76f6bb02-b60c-4d66-a4f3-cc4e4f8fb0a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tools">
+      <UniqueIdentifier>{770c08b1-91a7-4505-bee9-32778e765657}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="base\base.cpp">
@@ -44,6 +47,9 @@
     </ClCompile>
     <ClCompile Include="tests\test_trackers.cpp">
       <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\gen_box_model.cpp">
+      <Filter>tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
