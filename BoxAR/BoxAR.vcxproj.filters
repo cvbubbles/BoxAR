@@ -71,15 +71,6 @@
     <ClInclude Include="core\Detector3.hpp">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="core\model2.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="core\modelContour1.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="core\model.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="core\v1.DetectorModelData.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -92,10 +83,16 @@
     <ClInclude Include="cmdstd.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="core\tracker_utils.h">
+      <Filter>core</Filter>
+    </ClInclude>
     <ClInclude Include="core\v1.Tracker.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="core\tracker_utils.h">
+    <ClInclude Include="core\v1.BaseTracker1.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\v1.BaseTracker2.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>

@@ -132,7 +132,7 @@
       <PreprocessorDefinitions>CVRENDER_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>./;../;../include/;$(D_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MaxSpeed</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,11 +160,10 @@
     <ClInclude Include="core\Detector3.h" />
     <ClInclude Include="core\Detector3.hpp" />
     <ClInclude Include="core\tracker_utils.h" />
+    <ClInclude Include="core\v1.BaseTracker2.h" />
     <ClInclude Include="core\v1.DetectorModelData.h" />
     <ClInclude Include="core\v1.Detector.h" />
-    <ClInclude Include="core\model.h" />
-    <ClInclude Include="core\model2.h" />
-    <ClInclude Include="core\modelContour1.h" />
+    <ClInclude Include="core\v1.BaseTracker1.h" />
     <ClInclude Include="core\v1.Tracker.h" />
     <ClInclude Include="core\vxbase.h" />
     <ClInclude Include="cmdstd.h" />

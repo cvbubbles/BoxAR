@@ -7,6 +7,8 @@ _VX_BEG(v1)
 
 namespace vx = v1;
 
+_IMPL_BEG(impl_detector)
+
 struct Param
 {
 	int fdFeatures = 1000;
@@ -207,18 +209,20 @@ public:
 	vx::DetectorModelData* detectorModelData;
 };
 
-
 class Detector
 	:public re3d::FrameProc
 {
 	DEFINE_RE3D_TYPE2(Detector, "v1.Detector")
 private:
+
 	ModelSet* _modelSet;
 	std::vector<DModel>  _models;
 	Param  _param;
 public:
 	virtual void init(ModelSet* modelSet, ArgSet* args)
 	{
+		//using namespace detector;
+
 		bool preload = false;
 		std::string d2dModelFile;
 
@@ -249,6 +253,8 @@ public:
 
 	virtual int pro(const Mat& img, FrameData& fd, ff::ArgSet*)
 	{
+		//using namespace detector;
+
 		Mat camImgDesc;
 		std::vector<KeyPoint> camImgKP;
 
@@ -308,6 +314,9 @@ public:
 	}
 };
 
+_IMPL_END()
+
+using impl_detector::Detector;
 
 REGISTER_RE3D_TYPE(Detector, 0)
 

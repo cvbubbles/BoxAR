@@ -15,6 +15,9 @@
 #define _VX_BEG(x)  namespace boxar{ namespace x{
 #define _VX_END()   }}
 
+#define _IMPL_BEG(x) namespace x{
+#define _IMPL_END()  }
+
 #ifdef _MSC_VER
 
 #pragma warning(disable:4267)

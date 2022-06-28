@@ -5,6 +5,8 @@
 
 _VX_BEG(v1)
 
+_IMPL_BEG(impl_detector_model_data)
+
 struct ModelParam
 {
 	int  nSampleViews = 100;
@@ -824,6 +826,7 @@ public:
 	}
 };
 
+
 class DetectorModelData
 	:public Model::ManagedObject
 {
@@ -843,6 +846,10 @@ public:
 		this->build(model);
 	}
 };
+
+_IMPL_END()
+
+using impl_detector_model_data::DetectorModelData;
 
 REGISTER_RE3D_TYPE(DetectorModelData, 0)
 
