@@ -13,9 +13,9 @@ struct Param
 {
 	int fdFeatures = 1000;
 	
-	float fdScaleFactor = 1.5f;
+	float fdScaleFactor = 1.2f;
 	int  fdLevels = 4;
-	float fdImageScale = 2.0f;
+	float fdImageScale = 1.0f;
 
 	/*float fdScaleFactor = 1.25f;
 	int  fdLevels = 2;
@@ -38,11 +38,12 @@ struct Param
 	bool removeStaticBG = false;
 };
 
-typedef cv::Ptr<cv::ORB>  FDPtrT;
+//typedef cv::Ptr<cv::ORB>  FDPtrT;
 
-void detectImageFeatures(FDPtrT fd, const Mat& img, std::vector<KeyPoint>& kp, Mat& desc, Mat mask, const Param& param)
+void detectImageFeatures(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc, Mat mask, const Param& param)
 {
-	//static auto fd = cv::ORB::create(param.fdFeatures, param.fdScaleFactor, param.fdLevels);
+	auto fd = cv::ORB::create(param.fdFeatures, param.fdScaleFactor, param.fdLevels);
+	//auto fd = cv::AKAZE::create(5, 0, 3, 0.001, 4, 2, 1);
 
 	if (fabs(param.fdImageScale - 1.0f) < 1e-3f)
 		fd->detectAndCompute(img, mask, kp, desc);
@@ -65,11 +66,12 @@ void detectImageFeatures(FDPtrT fd, const Mat& img, std::vector<KeyPoint>& kp, M
 	}
 }
 
-void detectImageFeatures(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc, Mat mask, const Param& param)
-{
-	FDPtrT fd = cv::ORB::create(param.fdFeatures, param.fdScaleFactor, param.fdLevels);
-	detectImageFeatures(fd, img, kp, desc, mask, param);
-}
+//void detectImageFeatures(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc, Mat mask, const Param& param)
+//{
+//	//FDPtrT fd = cv::ORB::create(param.fdFeatures, param.fdScaleFactor, param.fdLevels);
+//	
+//	detectImageFeatures(fd, img, kp, desc, mask, param);
+//}
 
 
 void getPointPairsWithMatches(std::vector<DMatch>& matches, const std::vector<Point3f>& objKP, const std::vector<KeyPoint>& camImgKP, const Mat& camImgDesc,

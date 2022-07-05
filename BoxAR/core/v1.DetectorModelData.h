@@ -40,6 +40,7 @@ inline void detectOnModel(const Mat3b& img, std::vector<double>& vScale, std::ve
 	for (int i = 0; i < nLevels; ++i)
 	{
 		auto fd = cv::ORB::create(nKP, 1.2, 1);
+		//auto fd = cv::AKAZE::create(5, 0, 3, 0.001, 4, 1);
 
 		fd->detectAndCompute(grayL, maskL, kp[i], desc[i]);
 		vScale[i] = double(grayL.cols) / img.cols;
@@ -142,11 +143,11 @@ inline void selPoints(const std::vector<DPoint>& pts, const Mat& ptsDesc, std::v
 {
 	//int nSel = 10000;
 
-	printf("build index...\n");
+	//printf("build index...\n");
 	FMIndex knn;
 	knn.build(ptsDesc, FMIndex::LSH);
 
-	printf("knn search...\n");
+	//printf("knn search...\n");
 	Mat1i indices;
 	Mat1i dists;
 	knn.knnSearch(ptsDesc, indices, dists, K);
@@ -809,15 +810,17 @@ public:
 
 		if (streamPtr)
 		{
-			if (streamPtr->Empty()||forceRebuild)
+			std::string versionCode = model.getInfos().versionCode;
+
+			if(!streamPtr->HeadMatched(versionCode)||forceRebuild)
 			{
 				ff::ArgSet args;
 				this->build(model.get3DModel(), args);
-				(*streamPtr) << *this;
+				(*streamPtr) << versionCode << *this;
 			}
 			else
 			{
-				(*streamPtr) >> *this;
+				(*streamPtr) >> versionCode >> *this;
 
 				nLevels = *std::max_element(vLevels.begin(), vLevels.end()) + 1;
 				_buildMatcher(0, -1);

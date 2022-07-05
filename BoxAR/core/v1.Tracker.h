@@ -8,6 +8,7 @@ _VX_BEG(v1)
 
 _IMPL_BEG(impl_tracker)
 
+typedef BaseTracker1  BaseTracker;
 
 class PoseScore
 {
@@ -73,6 +74,7 @@ class DModel
 {
 public:
 	BaseTracker  baseTracker;
+	//BaseTracker2 baseTracker2;
 public:
 	//void refine(const Mat &img, re3d::ImageObject& obj, const Matx33f &K)
 	//{
@@ -139,6 +141,8 @@ public:
 				auto md = _modelSet->getModel(i);
 
 				models[i].baseTracker.loadModel(*md, "");
+
+				//models[i].baseTracker2.loadModel(*md, "");
 			}
 			_models.swap(models);
 		}
@@ -225,6 +229,8 @@ public:
 				RigidPose pose;
 				if (_models[imodel].baseTracker.track(img, pose, fd.cameraK))
 				{
+					//_models[imodel].baseTracker2.refine(img, pose, fd.cameraK);
+
 					float score = poseScore.getScore(&_models[imodel].baseTracker, pose, fd.cameraK);
 
 					cur.poseTracked.push_back({ imodel, pose, score});
@@ -248,8 +254,8 @@ public:
 				if (t && t->score+0.05 < d.score || !t)
 				//if(!t)
 				{
-					if (t)
-						printf("reset...%.2f>%.2f \n", d.score, t->score);
+					//if (t)
+					//	printf("reset...%.2f>%.2f \n", d.score, t->score);
 
 					if (t)
 						*t = d;

@@ -145,7 +145,7 @@
     <ClCompile Include="base\base.cpp" />
     <ClCompile Include="base\index.cpp" />
     <ClCompile Include="base\utils.cpp" />
-    <ClCompile Include="core\boxar.cpp" />
+    <ClCompile Include="core\coreobjs.cpp" />
     <ClCompile Include="impl.cpp" />
     <ClCompile Include="impl_cvrender.cpp" />
     <ClCompile Include="main.cpp" />
@@ -157,13 +157,10 @@
     <ClInclude Include="base\def.h" />
     <ClInclude Include="base\index.h" />
     <ClInclude Include="base\utils.h" />
-    <ClInclude Include="core\Detector3.h" />
-    <ClInclude Include="core\Detector3.hpp" />
     <ClInclude Include="core\tracker_utils.h" />
-    <ClInclude Include="core\v1.BaseTracker2.h" />
+    <ClInclude Include="core\v1.BaseTracker1.h" />
     <ClInclude Include="core\v1.DetectorModelData.h" />
     <ClInclude Include="core\v1.Detector.h" />
-    <ClInclude Include="core\v1.BaseTracker1.h" />
     <ClInclude Include="core\v1.Tracker.h" />
     <ClInclude Include="core\vxbase.h" />
     <ClInclude Include="cmdstd.h" />

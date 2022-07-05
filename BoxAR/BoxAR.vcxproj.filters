@@ -42,14 +42,14 @@
     <ClCompile Include="impl_cvrender.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="core\boxar.cpp">
-      <Filter>core</Filter>
-    </ClCompile>
     <ClCompile Include="tests\test_trackers.cpp">
       <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="tools\gen_box_model.cpp">
       <Filter>tools</Filter>
+    </ClCompile>
+    <ClCompile Include="core\coreobjs.cpp">
+      <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -64,12 +64,6 @@
     </ClInclude>
     <ClInclude Include="base\utils.h">
       <Filter>base</Filter>
-    </ClInclude>
-    <ClInclude Include="core\Detector3.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="core\Detector3.hpp">
-      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="core\v1.DetectorModelData.h">
       <Filter>core</Filter>
@@ -90,9 +84,6 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="core\v1.BaseTracker1.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="core\v1.BaseTracker2.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>

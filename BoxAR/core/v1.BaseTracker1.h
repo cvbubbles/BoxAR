@@ -3,6 +3,9 @@
 #include"vxbase.h"
 #include"tracker_utils.h"
 #include<queue>
+#include"v1.DetectorModelData.h"
+#include"opencv2/xfeatures2d.hpp"
+#include"BFC/thread.h"
 
 _VX_BEG(v1)
 
@@ -365,9 +368,19 @@ public:
 	virtual ~DFRHandler() {}
 };
 
+struct  PointMatch
+{
+	Point3f   modelPoint;
+	Point2f   imPoint;
+	float     weight;
+};
 
 struct Optimizer
 {
+public:	
+	std::vector<PointMatch>  _pointMatches;
+
+
 public:
 	struct ContourPoint
 	{
@@ -787,6 +800,25 @@ public:
 				nerr += w;
 			}
 		}
+
+		int npm = int(_pointMatches.size());
+		float ws = __min(float(npm) / 50.f, 3.f);
+		float wpm = float(npt) / (float(npm) + 1e-3f) * ws;
+
+		for (int i = 0; i < npm; ++i)
+		{
+			auto& pm = _pointMatches[i];
+			Point3f Q = R * pm.modelPoint + t;
+			Point3f q = K * Q;
+
+			Point2f pt(q.x / q.z, q.y / q.z);
+
+			Vec2f nx = pt - pm.imPoint;
+			err += sqrt(nx.dot(nx)) + 1e-6f;
+
+			nerr += wpm;
+		}
+
 		return err / nerr;
 	}
 
@@ -801,7 +833,7 @@ public:
 		const float fx = K(0, 0), fy = K(1, 1);
 
 		auto* vcp = &cpoints[0];
-		int npt = (int)cpoints.size();
+		int npt =  (int)cpoints.size();
 
 		Matx66f JJ = Matx66f::zeros();
 		Vec6f J(0, 0, 0, 0, 0, 0);
@@ -861,7 +893,53 @@ public:
 			}
 		}
 
-		const float lambda = 5000.f * npt / 200.f;
+		int npm = (int)_pointMatches.size();
+		float ws = __min(float(npm) / 50.f, 3.f);
+		float wpm =  float(npt) / (float(npm) + 1e-3f) * ws;
+		//wpm = 1.f;
+
+		for (int i = 0; i < npm; ++i)
+		{
+			auto& pm = _pointMatches[i];
+			Point3f Q = R * pm.modelPoint + t;
+			Point3f q = K * Q;
+
+			/*const int x = int(q.x / q.z + 0.5), y = int(q.y / q.z + 0.5);
+			if (uint(x - _roi.x) >= uint(_roi.width) || uint(y - _roi.y) >= uint(_roi.height))
+				continue;
+
+			Point3f qn = K * (R * vcp[i].normal + t);
+			Vec2f n(qn.x / qn.z - q.x / q.z, qn.y / qn.z - q.y / q.z);
+			n = normalize(n);*/
+
+			const float X = Q.x, Y = Q.y, Z = Q.z;
+			/*      |fx/Z   0   -fx*X/Z^2 |   |a  0   b|
+			dq/dQ = |                     | = |        |
+					|0    fy/Z  -fy*Y/Z^2 |   |0  c   d|
+			*/
+			const float a = fx / Z, b = -fx * X / (Z * Z), c = fy / Z, d = -fy * Y / (Z * Z);
+
+			Point2f pt(q.x / q.z, q.y / q.z);
+
+			Vec2f nx = pt - pm.imPoint;
+			float dist = sqrt(nx.dot(nx)) + 1e-6f;
+			nx *= 1.f / dist;
+
+			Vec3f n_dq_dQ(nx[0] * a, nx[1] * c, nx[0] * b + nx[1] * d);
+
+			auto dt = n_dq_dQ.t() * R;
+			auto dR = pm.modelPoint.cross(Vec3f(dt.val[0], dt.val[1], dt.val[2]));
+
+			Vec6f j(dt.val[0], dt.val[1], dt.val[2], dR.x, dR.y, dR.z);
+
+			float w = pow(1.f / (dist + 1.f), 2.f - alpha) * wpm /** pm.weight*/;
+
+			J += w * dist * j;
+
+			JJ += w * j * j.t();
+		}
+
+		const float lambda = 5000.f * (npt + npm*ws) / 200.f;
 
 		for (int i = 0; i < 3; ++i)
 			JJ(i, i) += lambda * 100.f;
@@ -903,28 +981,57 @@ public:
 };
 
 
+//struct Projector
+//{
+//	Matx33f _KR;
+//	Vec3f _Kt;
+//public:
+//	Projector(const Matx33f& _K, const Matx33f& _R, const Vec3f& _t)
+//		:_KR(_K* _R), _Kt(_K* _t)
+//	{
+//	}
+//	Point2f operator()(const Point3f& P) const
+//	{
+//		Vec3f p = _KR * Vec3f(P) + _Kt;
+//		return Point2f(p[0] / p[2], p[1] / p[2]);
+//	}
+//	template<typename _ValT, typename _getPointT>
+//	std::vector<Point2f> operator()(const std::vector<_ValT>& vP, _getPointT getPoint) const
+//	{
+//		std::vector<Point2f> vp(vP.size());
+//		for (int i = 0; i < (int)vP.size(); ++i)
+//			vp[i] = (*this)(getPoint(vP[i]));
+//		return vp;
+//	}
+//	template<typename _ValT>
+//	std::vector<Point2f> operator()(const std::vector<_ValT>& vP)
+//	{
+//		return (*this)(vP, [](const _ValT& v) {return v; });
+//	}
+//};
+
 
 struct Templates
 {
 	Point3f               modelCenter;
 	std::vector<DView>   views;
 	ViewIndex             viewIndex;
+	
+	DetectorModelData* _detectorModelData;
+	float              _modelScale;
+	CVRender*		   _render;
 
 	DEFINE_BFS_IO_2(Templates, modelCenter, views)
 
 public:
 	void build(CVRModel& model);
 
-	void save(const std::string& file)
+	
+	void loadExt(re3d::Model& model, CVRender *render, float modelScale)
 	{
-		ff::OBFStream os(file);
-		os << (*this);
-	}
-	void load(const std::string& file)
-	{
-		ff::IBFStream is(file);
-		is >> (*this);
-		viewIndex.build(this->views);
+		_detectorModelData = model.getManaged<DetectorModelData>();
+		_modelScale = modelScale;
+		_render = render;
 	}
 	void showInfo()
 	{
@@ -964,12 +1071,22 @@ public:
 		return _getNearestView(this->_getViewDir(R, t));
 	}
 
-	float pro(const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT)
+	Rect getCurROI(const Matx33f &K, const Pose &pose, int *_curView=nullptr)
 	{
-		return this->pro1(K, pose, curProb, thetaT, errT);
+		Rect curROI;
+		int curView = this->_getNearestView(pose.R, pose.t);
+		{
+			Projector prj(K, pose.R, pose.t);
+			std::vector<Point2f>  c2d = prj(views[curView].contourPoints3d, [](const CPoint& p) {return p.center; });
+			Rect_<float> rectf = getBoundingBox2D(c2d);
+			curROI = Rect(rectf);
+		}
+		if (_curView)
+			*_curView = curView;
+		return curROI;
 	}
 
-	float pro1(const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT);
+	float pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT);
 
 	void getProjectedContours(const Matx33f& K, const Pose& pose, std::vector<Point2f>& points, std::vector<Point2f>* normals)
 	{
@@ -982,10 +1099,337 @@ public:
 			*normals = prj(views[curView].contourPoints3d, [](const CPoint& p) {return p.normal; });
 			for (int i = 0; i < (int)points.size(); ++i)
 			{
-				auto n=(*normals)[i] - points[i];
+				auto n = (*normals)[i] - points[i];
 				(*normals)[i] = normalize(Vec2f(n));
 			}
 		}
+	}
+#if 0
+	void _getModelPoints(const Matx33f& K, Pose pose, const Mat &img, Rect roi, std::vector<Point3f>& points, Mat& desc, Ptr<ORB> &fd)
+	{
+		CVRMats mats;
+		mats.mModel = cvrm::fromR33T(pose.R, pose.t*_modelScale);
+		mats.mProjection = cvrm::fromK(K, img.size(), 0.1, 30);
+
+		time_t beg = clock();
+		auto rr = _render->exec(mats, img.size(), CVRM_IMAGE | CVRM_DEPTH, CVRM_DEFAULT, nullptr, roi);
+		printf("\nfd-time=%d   \n", int(clock() - beg));
+
+		//imshow("rr.img", rr.img);
+		//cv::waitKey();
+
+		std::vector<KeyPoint> kp;
+
+		
+		//auto fdx = cv::AKAZE::create(5, 0, 3, 0.001, 4, 2);
+		fd->detectAndCompute(rr.img, Mat(), kp, desc);
+		
+
+		//fd->detectAndCompute(rr.img, Mat(), kp, desc);
+
+		
+		
+		points.clear();
+		points.reserve(kp.size());
+		CVRProjector prj(rr, img.size());
+		for (auto& p : kp)
+		{
+			points.push_back(prj.unproject(p.pt+Point2f(roi.x,roi.y))/_modelScale);
+		}
+	}
+
+	std::vector<PointMatch> calcPointMatches(const Matx33f &K, Pose pose, const Mat &img, Rect roi, Size objSize, float spaceDistT=20.f)
+	{
+		pose.t *= 1.f / _modelScale;
+
+		auto mT = cvrm::fromR33T(pose.R, pose.t);
+
+		auto fd = cv::ORB::create(200, 1.25, 2);
+		//auto fd = cv::AKAZE::create(5, 0, 3, 0.001, 4, 2);
+
+		std::vector<Point3f>  selPoints;
+		Mat selDesc;
+		//_detectorModelData->modelPoints.getSubsetWithView(mT, true, objSize, selPoints, selDesc, 1);
+		this->_getModelPoints(K, pose, img, roi, selPoints, selDesc, fd);
+		printf("nsel=%d\n", selPoints.size());
+
+		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
+		if (roi.empty()||selPoints.empty())
+			return std::vector<PointMatch>();
+
+		Mat gray = cv::convertBGRChannels(img(roi), 1);
+		std::vector<KeyPoint> imKp;
+		Mat imDesc;
+		fd->detectAndCompute(gray, Mat(), imKp, imDesc);
+
+		if (imKp.empty())
+			return std::vector<PointMatch>();
+
+		Mat dimg;
+		cv::drawKeypoints(img(roi), imKp, dimg);
+		imshow("kpimg", dimg);
+		//cv::waitKey();
+
+		std::vector<DMatch> matches;
+
+		cv::BFMatcher matcher(NORM_HAMMING, false);
+		matcher.match(imDesc, selDesc, matches);
+		//matcher.knnMatch
+
+		/*FMIndex knn;
+		knn.build(selDesc, FMIndex::LSH);
+		knn.match(imDesc, matches);*/
+
+		//std::sort(matches.begin(), matches.end());
+		//matches.resize(matches.size() / 2);
+		auto minDistance=std::min_element(matches.begin(), matches.end())->distance;
+		auto distT = minDistance * 2.f;
+
+		Projector prj(K, pose.R, pose.t);
+		Point2f roiOffset(float(roi.x), float(roi.y));
+		spaceDistT *= spaceDistT;
+
+		std::vector<PointMatch> pm;
+		std::vector<Point2f>    dv;
+		pm.reserve(matches.size());
+		dv.reserve(matches.size());
+
+		Point2f dmean(0.f, 0.f);
+
+		for (auto& m : matches)
+		{
+			if (m.distance > distT || uint(m.trainIdx)>selPoints.size())
+				continue;
+
+			Point2f q = roiOffset + imKp[m.queryIdx].pt;
+			Point2f d = prj(selPoints[m.trainIdx]) - q;
+			if (d.dot(d) > spaceDistT)
+				continue;
+
+			PointMatch tm;
+			tm.modelPoint = selPoints[m.trainIdx] * _modelScale;
+			tm.imPoint = q;
+
+			pm.push_back(tm);
+			dv.push_back(d);
+			dmean += d;
+		}
+		if (!pm.empty())
+		{
+			dmean *= 1.f / float(dv.size());
+			float dsum = 0;
+			for (size_t i = 0; i < pm.size(); ++i)
+			{
+				Point2f ddv = dv[i] - dmean;
+				float d = ddv.dot(ddv);
+				pm[i].weight = exp(-d / 4.f);
+				dsum += sqrt(ddv.dot(ddv));
+			}
+			dsum /= pm.size();
+
+			//printf("\ndsum=%.2f np=%d\n", dsum, pm.size());
+		}
+
+		return pm;
+	}
+#endif
+	void _detectAndCompute(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc)
+	{
+		Mat gray = cv::convertBGRChannels(img, 1);
+		std::vector<Point2f> corners;
+		cv::goodFeaturesToTrack(gray, corners, 200, 0.01, 5);
+
+		kp.resize(corners.size());
+		for (size_t i = 0; i < kp.size(); ++i)
+			kp[i].pt = corners[i];
+		
+		auto fdx = cv::xfeatures2d::DAISY::create();
+		fdx->compute(img, kp, desc);
+	}
+	void _getModelPoints(const Matx33f& K, Pose pose, const Mat& img, Rect roi, std::vector<Point3f>& points, Mat& desc)
+	{
+		CVRMats mats;
+		mats.mModel = cvrm::fromR33T(pose.R, pose.t * _modelScale);
+		mats.mProjection = cvrm::fromK(K, img.size(), 0.1, 10);
+
+		auto rr = _render->exec(mats, img.size(), CVRM_IMAGE | CVRM_DEPTH, CVRM_DEFAULT, nullptr, roi);
+		
+		std::vector<KeyPoint> kp;
+
+		this->_detectAndCompute(rr.img, kp, desc);
+
+		points.clear();
+		points.reserve(kp.size());
+		CVRProjector prj(rr, img.size());
+		for (auto& p : kp)
+		{
+			points.push_back(prj.unproject(p.pt + Point2f(roi.x, roi.y)) / _modelScale);
+		}
+	}
+	std::vector<PointMatch> calcPointMatches(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, float spaceDistT = 20.f)
+	{
+		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
+		if (roi.empty())
+			return std::vector<PointMatch>();
+
+
+		pose.t *= 1.f / _modelScale;
+
+		std::vector<Point3f>  selPoints;
+		Mat selDesc;
+
+		std::thread t1(
+			[this, &K,&pose,&img,&roi,&selPoints,&selDesc]() {
+				this->_getModelPoints(K, pose, img, roi, selPoints, selDesc);
+			});
+
+		std::vector<KeyPoint> imKp;
+		Mat imDesc;
+		this->_detectAndCompute(img(roi), imKp, imDesc);
+
+		t1.join();
+
+		if (selPoints.size()<10 || imKp.size()<10||selPoints.size()<10)
+			return std::vector<PointMatch>();
+
+		auto matcher = cv::DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
+
+		std::vector<std::vector<DMatch>> knnMatches;
+		matcher->knnMatch(imDesc, selDesc, knnMatches, 2);
+		/*matcher->add(selDesc);
+		matcher->knnMatch(imDesc, knnMatches, 2);*/
+
+		std::vector<DMatch> matches;
+		for (auto& km : knnMatches)
+		{
+			if (km[0].distance * 1.1 < km[1].distance)
+				matches.push_back(km[0]);
+		}
+
+		Projector prj(K, pose.R, pose.t);
+		Point2f roiOffset(float(roi.x), float(roi.y));
+		spaceDistT *= spaceDistT;
+
+		std::vector<PointMatch> pm;
+		pm.reserve(matches.size());
+
+		for (auto& m : matches)
+		{
+			if (/*m.distance > distT ||*/ uint(m.trainIdx) > selPoints.size())
+				continue;
+
+			Point2f q = roiOffset + imKp[m.queryIdx].pt;
+			Point2f d = prj(selPoints[m.trainIdx]) - q;
+			if (d.dot(d) > spaceDistT)
+				continue;
+
+			PointMatch tm;
+			tm.modelPoint = selPoints[m.trainIdx] * _modelScale;
+			tm.imPoint = q;
+
+			pm.push_back(tm);
+		}
+		//printf("\ndsum=%.2f np=%d\n", 0.f, pm.size());
+
+		return pm;
+	}
+	std::vector<PointMatch> calcPointMatches1(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, float spaceDistT = 20.f)
+	{
+		pose.t *= 1.f / _modelScale;
+
+		auto mT = cvrm::fromR33T(pose.R, pose.t);
+
+		//auto fd = cv::ORB::create(200, 1.25, 2);
+		//auto fd = cv::AKAZE::create(5, 0, 3, 0.001, 4, 2);
+
+		std::vector<Point3f>  selPoints;
+		Mat selDesc;
+		//_detectorModelData->modelPoints.getSubsetWithView(mT, true, objSize, selPoints, selDesc, 1);
+		this->_getModelPoints(K, pose, img, roi, selPoints, selDesc);
+		printf("nsel=%d\n", selPoints.size());
+
+		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
+		if (roi.empty() || selPoints.empty())
+			return std::vector<PointMatch>();
+
+		Mat gray = cv::convertBGRChannels(img(roi), 1);
+		std::vector<KeyPoint> imKp;
+		Mat imDesc;
+		//fd->detectAndCompute(gray, Mat(), imKp, imDesc);
+		this->_detectAndCompute(img(roi), imKp, imDesc);
+
+		if (imKp.empty())
+			return std::vector<PointMatch>();
+
+		/*Mat dimg;
+		cv::drawKeypoints(img(roi), imKp, dimg);
+		imshow("kpimg", dimg);
+		cv::waitKey();*/
+
+		std::vector<DMatch> matches;
+
+		//cv::BFMatcher matcher(NORM_HAMMING, false);
+		//cv::BFMatcher matcher(NORM_L2, false);
+		//matcher.match(imDesc, selDesc, matches);
+		//matcher.knnMatch
+
+		/*FMIndex knn;
+		knn.build(selDesc, FMIndex::LINEAR);
+		knn.match(imDesc, matches);*/
+		auto matcher = cv::DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
+		matcher->match(imDesc, selDesc, matches);
+
+		//std::sort(matches.begin(), matches.end());
+		//matches.resize(matches.size() / 2);
+		auto minDistance = std::min_element(matches.begin(), matches.end())->distance;
+		auto distT = minDistance * 4.f;
+
+		Projector prj(K, pose.R, pose.t);
+		Point2f roiOffset(float(roi.x), float(roi.y));
+		spaceDistT *= spaceDistT;
+
+		std::vector<PointMatch> pm;
+		std::vector<Point2f>    dv;
+		pm.reserve(matches.size());
+		dv.reserve(matches.size());
+
+		Point2f dmean(0.f, 0.f);
+
+		for (auto& m : matches)
+		{
+			if (m.distance > distT || uint(m.trainIdx) > selPoints.size())
+				continue;
+
+			Point2f q = roiOffset + imKp[m.queryIdx].pt;
+			Point2f d = prj(selPoints[m.trainIdx]) - q;
+			if (d.dot(d) > spaceDistT)
+				continue;
+
+			PointMatch tm;
+			tm.modelPoint = selPoints[m.trainIdx] * _modelScale;
+			tm.imPoint = q;
+
+			pm.push_back(tm);
+			dv.push_back(d);
+			dmean += d;
+		}
+		if (!pm.empty())
+		{
+			dmean *= 1.f / float(dv.size());
+			float dsum = 0;
+			for (size_t i = 0; i < pm.size(); ++i)
+			{
+				Point2f ddv = dv[i] - dmean;
+				float d = ddv.dot(ddv);
+				pm[i].weight = exp(-d / 4.f);
+				dsum += sqrt(ddv.dot(ddv));
+			}
+			dsum /= pm.size();
+
+			printf("\ndsum=%.2f np=%d\n", dsum, pm.size());
+		}
+
+		return pm;
 	}
 };
 
@@ -1038,25 +1482,25 @@ public:
 
 };
 
-inline float Templates::pro1(const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT)
+inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT)
 {
-	Rect curROI;
-	int curView = this->_getNearestView(pose.R, pose.t);
-	{
-		Projector prj(K, pose.R, pose.t);
-		std::vector<Point2f>  c2d = prj(views[curView].contourPoints3d, [](const CPoint& p) {return p.center; });
-		Rect_<float> rectf = getBoundingBox2D(c2d);
-		curROI = Rect(rectf);
-	}
+	int curView;
+	Rect curROI = this->getCurROI(K, pose, &curView);
 
 	Optimizer dfr;
+
+	std::thread t1(
+		[this, &K, &pose, &img, curROI, &dfr]() {
+			dfr._pointMatches = this->calcPointMatches(K, pose, img, curROI, curROI.size());
+		});
+
 	Rect roi = curROI;
 	const int dW = 100;
 	rectAppend(roi, dW, dW, dW, dW);
 	roi = rectOverlapped(roi, Rect(0, 0, curProb.cols, curProb.rows));
 	dfr.computeScanLines(curProb, roi);
 
-	//printf("init time=%dms \n", int(clock() - beg));
+	t1.join();
 
 	Optimizer::PoseData dpose;
 	static_cast<Pose&>(dpose) = pose;
@@ -1073,7 +1517,6 @@ inline float Templates::pro1(const Matx33f& K, Pose& pose, const Mat1f& curProb,
 
 	float errMin = dfr.calcError(dpose, K, this->views[curView].contourPoints3d, alpha);
 	if (errMin > errT)
-		//if(false)
 	{
 		const auto R0 = dpose.R;
 
@@ -1240,29 +1683,30 @@ class Object
 {
 public:
 	std::string modelFile;
-	std::string dataFile;
 	float       modelScale;
 	Templates   templ;
 private:
 	CVRModel  model;
 	CVRender  render;
 public:
-	void loadModel(const std::string& modelFile, const std::string &dataFile, float modelScale, bool forceRebuild = false)
+	void loadModel(StreamPtr streamPtr, re3d::Model &model, float modelScale, bool forceRebuild = false)
 	{
-		
-		this->modelFile = modelFile;
-		this->dataFile = dataFile;
+		this->modelFile = model.get3DModel().getFile();
 		this->modelScale = modelScale;
-			
-		//auto tfile = ff::ReplacePathElem(modelFile, "tm033", ff::RPE_FILE_EXTENTION); //033(ECCV submit)
-		if (!forceRebuild && ff::pathExist(dataFile))
-			templ.load(dataFile);
+
+		std::string versionCode = model.getInfos().versionCode;
+
+		if (!forceRebuild && streamPtr->HeadMatched(versionCode))
+		{
+			(*streamPtr) >> versionCode >> templ;
+			templ.viewIndex.build(templ.views);
+		}
 		else
 		{
 			templ.build(this->get3DModel());
-			templ.save(dataFile);
+			(*streamPtr) << versionCode << templ;
 		}
-		//templ.showInfo();
+		templ.loadExt(model, &this->getRender(), modelScale);
 	}
 	CVRModel& get3DModel()
 	{
@@ -1408,10 +1852,11 @@ inline float getRDiff(const cv::Matx33f& R1, const cv::Matx33f& R2)
 {
 	cv::Matx33f tmp = R1.t() * R2;
 	float cmin = __min(__min(tmp(0, 0), tmp(1, 1)), tmp(2, 2));
-	return acos(cmin);
+	float r=acos(cmin);
+	return isnan(r) ? 0.f : r;
 }
 
-class BaseTracker
+class BaseTracker1
 {
 	float       _modelScale = 0.001f;
 	float       _histogramLearningRate = 0.2f;
@@ -1423,6 +1868,7 @@ class BaseTracker
 	ColorHistogram _colorHistogram;
 	bool    _isLocalTracking = false;
 	bool    _useInnerSeg = false;
+	//DetectorModelData* _detectorModelData;
 
 	struct FrameInfo
 	{
@@ -1443,10 +1889,11 @@ class BaseTracker
 public:
 	void loadModel(re3d::Model &model, const std::string& argstr)
 	{
-		_obj.loadModel(model.getInfos().modelFile, model.getData().getStreamFile("v1.BaseTracker"), _modelScale);
+		auto streamPtr = model.getData().getStream("v1.BaseTracker");
+		_obj.loadModel(streamPtr, model, _modelScale);
 
 		ff::CommandArgSet args(argstr);
-		_isLocalTracking = true;// args.getd<bool>("local", false);
+		_isLocalTracking = false;// args.getd<bool>("local", false);
 		_useInnerSeg = true;// args.getd<bool>("useInnserSeg", false);
 		_cur.tracked = false;
 	}
@@ -1460,7 +1907,7 @@ public:
 
 		if (_useInnerSeg)
 			_colorHistogram.update(_obj, _cur.img, _cur.pose, _K, 1.f);
-		
+
 		_cur.tracked = true;
 	}
 	void startUpdate(const Mat& img, const Mat1f& segMask, Pose gtPose = Pose())
@@ -1512,7 +1959,7 @@ public:
 			errT = _getMedianOfLastN(_frameInfo, 15, [](const FrameInfo& v) {return v.err; });
 		}
 
-		_cur.err = _obj.templ.pro(_K, _cur.pose, _cur.colorProb, thetaT, _isLocalTracking ? FLT_MAX : errT);
+		_cur.err = _obj.templ.pro(_cur.img, _K, _cur.pose, _cur.colorProb, thetaT, _isLocalTracking ? FLT_MAX : errT);
 		pose = _descalePose(_cur.pose);
 		return _cur.err;
 	}
@@ -1524,10 +1971,20 @@ public:
 			_colorHistogram.update(_obj, _cur.img, _cur.pose, _K, _histogramLearningRate);
 	}
 
-	bool track(const Mat& tar, Pose& tarPose, const Matx33f& K)
+	bool track(Mat tar, Pose& tarPose, Matx33f K)
 	{
 		if (!_cur.tracked)
 			return false;
+
+		auto roi=_obj.templ.getCurROI(K, _cur.pose);
+		double scale = sqrt(200*200 / (double(roi.width) * roi.height) );
+		if (scale < 1.0)
+		{
+			tar = imscale(tar, scale, INTER_LINEAR);
+			K = cvrm::scaleK(K, scale);
+		}
+
+		_K = K;
 
 		tarPose = _descalePose(_cur.pose);
 		this->startUpdate(tar, Mat());
@@ -1549,12 +2006,14 @@ public:
 
 		float thetaT = CV_PI / 8, errT = 1.f;
 
-		float err=_obj.templ.pro(K, pose, prob, thetaT, _isLocalTracking ? FLT_MAX : errT);
+		float err = _obj.templ.pro(tar, K, pose, prob, thetaT, _isLocalTracking ? FLT_MAX : errT);
+		//float err = 1.f;
+
 		tarPose = _descalePose(pose);
 		return err;
 	}
 
-	float refine(const Mat& img, Pose& pose, const Matx33f &K)
+	float refine(const Mat& img, Pose& pose, const Matx33f& K)
 	{
 		return this->track(img, pose, img, pose, K);
 	}
@@ -1568,7 +2027,7 @@ public:
 
 _IMPL_END()
 
-using impl_base_tracker1::BaseTracker;
+using impl_base_tracker1::BaseTracker1;
 
 _VX_END()
 
