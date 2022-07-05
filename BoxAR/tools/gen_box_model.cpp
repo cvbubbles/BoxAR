@@ -147,14 +147,15 @@ void gen_box_model()
 	vector<Point2f>tex_coord;
 	vector<Face>faces;
 	double L, W, H;
-	cout << "please input length ,width and height :"<<endl;
+	cout << "please input length ,width and height :(mm)"<<endl;
 	cin >> L >> W >> H;
 
-
-	L *= 10;
-	W *= 10;
-	H *= 10;
-	
+	generate_points(points, L, W, H);
+	double resolution = 10;
+	L *= resolution;
+	W *= resolution;
+	H *= resolution;
+	Size size(2 * (H + W), 2 * H + L);
 
 	namedWindow("Image",0);
 	vector<Size> size_list = { Size(W,H) ,Size(H,L),Size(W,L), Size(H,L) ,Size(W,L),Size(W,H) };
@@ -204,10 +205,9 @@ void gen_box_model()
 		img_list.push_back(im_dst);
 		waitKey(0);
 	}
-	Size size(2*(H+W), 2*H+L);
 	Mat texture = Mat::zeros(size, CV_8UC3);
 	generate_texture(texture, img_list,L,W,H);
-	generate_points(points,L,W,H);
+
 	generate_texture_coordinates(tex_coord, L, W, H);
 	generate_faces(faces);
 	save_mesh_obj(model_dir+name+".obj",name + ".mtl", points, faces, tex_coord, size);
