@@ -92,18 +92,29 @@ public:
 	//}
 };
 
+
 class DPose
 {
 public:
-	int        imodel;
+	int        imodel=-1;
 	RigidPose  pose;
-	float      score;
+	//float      score;
+	Vec6f      vpose, svpose;
 public:
+	
+	bool isTracked() const
+	{
+		return pose.score > 1e-3f;
+	}
 	void get(re3d::ImageObject& o)
 	{
 		o.modelIndex = imodel;
-		o.pose.make < std::vector < RigidPose >>() = {pose};
-		o.score = score;
+		//RigidPose dpose (svpose);
+		//dpose.score = pose.score;
+
+		RigidPose dpose = pose;
+		o.pose.make < std::vector < RigidPose >>() = { dpose };
+		o.score = pose.score;
 	}
 };
 
@@ -160,7 +171,12 @@ public:
 		{
 			auto pose=v.pose.get<std::vector<RigidPose>>();
 			if (!pose.empty())
-				frame.poseDetected.push_back({ v.modelIndex, pose.front() });
+			{
+				DPose t;
+				t.imodel = v.modelIndex;
+				t.pose = pose.front();
+				frame.poseDetected.push_back(t);
+			}
 		}
 		_detectedFrame = &frame;
 	}
@@ -175,8 +191,11 @@ public:
 				int imodel = obj.imodel;
 				RigidPose tarPose;
 				_models[imodel].baseTracker.track(_detectedFrame->img,obj.pose,cur.img, tarPose, K);
-				float score = poseScore.getScore(&_models[imodel].baseTracker, tarPose, K);
-				cur.poseDetected.push_back({ imodel, tarPose, score });
+				DPose t;
+				t.imodel = imodel;
+				t.pose = tarPose;
+				t.pose.score = poseScore.getScore(&_models[imodel].baseTracker, tarPose, K);
+				cur.poseDetected.push_back(t);
 			}
 			_detectedFrame->locked = false;
 			_detectedFrame = nullptr;
@@ -219,21 +238,27 @@ public:
 			}
 		}
 
+		cur.poseTracked.resize(_models.size());
+
 		if (_frames.size()>1)
 		{
 			auto& prev = _frames[_frames.size() - 2];
-
+			
 			for (int i = 0; i < (int)prev.poseTracked.size(); ++i)
 			{
-				int imodel = prev.poseTracked[i].imodel;
+				//int imodel = prev.poseTracked[i].imodel;
+				if (!prev.poseTracked[i].isTracked())
+					continue;
 				RigidPose pose;
-				if (_models[imodel].baseTracker.track(img, pose, fd.cameraK))
+				if (_models[i].baseTracker.track(img, pose, fd.cameraK))
 				{
-					//_models[imodel].baseTracker2.refine(img, pose, fd.cameraK);
+					pose.score = poseScore.getScore(&_models[i].baseTracker, pose, fd.cameraK);
 
-					float score = poseScore.getScore(&_models[imodel].baseTracker, pose, fd.cameraK);
+					DPose t;
+					t.imodel = i;
+					t.pose = pose;
 
-					cur.poseTracked.push_back({ imodel, pose, score});
+					cur.poseTracked[i]=t;
 				}
 			}
 		}
@@ -242,35 +267,48 @@ public:
 			_bgThread.waitAll();
 			for (auto& d : cur.poseDetected)
 			{
-				DPose* t = nullptr;
-				for (auto& x : cur.poseTracked)
+				DPose* t = &cur.poseTracked[d.imodel];
+				
+				if (t->pose.score+0.05 < d.pose.score)
 				{
-					if (d.imodel == x.imodel)
-					{
-						t = &x; break;
-					}
-				}
-				//detection is better
-				if (t && t->score+0.05 < d.score || !t)
-				//if(!t)
-				{
-					//if (t)
-					//	printf("reset...%.2f>%.2f \n", d.score, t->score);
-
-					if (t)
-						*t = d;
-					else
-						cur.poseTracked.push_back(d);
+					*t = d;
 
 					_models[d.imodel].baseTracker.reset(cur.img, d.pose, fd.cameraK);
 				}
 			}
 		}
 
-		fd.objs.resize(cur.poseTracked.size());
-		for (int i = 0; i < fd.objs.size(); ++i)
+		if(false)
 		{
-			cur.poseTracked[i].get(fd.objs[i]);
+			int nf = (int)_frames.size();
+
+			for (int i = 0; i < (int)cur.poseTracked.size(); ++i)
+			{
+				cur.poseTracked[i].vpose = cur.poseTracked[i].pose.getVec6();
+
+				auto isTracked = [this, nf, i](int fi) {
+					return this->_frames[fi].poseTracked[i].isTracked();
+				};
+				auto fpose = [this, i](int fi) -> DPose&{
+					return this->_frames[fi].poseTracked[i];
+				};
+				if (nf >= 4 && isTracked(nf - 1) && isTracked(nf - 2) && isTracked(nf - 3) & isTracked(nf - 4))
+				{
+					auto svpose2 = 0.25f * fpose(nf - 4).vpose + 0.5f * fpose(nf - 3).vpose + 0.25f * fpose(nf - 2).vpose;
+					auto svpose1 = 0.25f * fpose(nf-3).vpose + 0.5f * fpose(nf-2).vpose + 0.25f * fpose(nf-1).vpose;
+					fpose(nf-1).svpose = svpose1*2.f - svpose2;
+				}
+			}
+		}
+
+		fd.objs.clear();
+		for (int i = 0; i < cur.poseTracked.size(); ++i)
+		{
+			if (cur.poseTracked[i].isTracked())
+			{
+				fd.objs.emplace_back();
+				cur.poseTracked[i].get(fd.objs.back());
+			}
 		}
 
 		return (int)fd.objs.size();

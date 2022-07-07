@@ -980,6 +980,195 @@ public:
 	}
 };
 
+class Refiner
+{
+public:
+	struct ModelPoint
+	{
+		Point3f pt;
+		float   w;
+	};
+	std::vector<ModelPoint> getModelPoints(CVRender& render, Pose& pose, const Matx33f& K, Size imgSize, Rect roi, int maxPoints=5000)
+	{
+		CVRMats mats;
+		mats.mModel = cvrm::fromR33T(pose.R, pose.t);
+		mats.mProjection = cvrm::fromK(K, imgSize, 0.1, 10);
+
+		auto rr = render.exec(mats, imgSize, CVRM_IMAGE | CVRM_DEPTH, CVRM_DEFAULT, nullptr, roi);
+
+		Mat rgray = cv::convertBGRChannels(rr.img, 1);
+		Mat1s dx, dy;
+		cv::Sobel(rgray, dx, CV_16S, 1, 0);
+		cv::Sobel(rgray, dy, CV_16S, 0, 1);
+		Mat1b edges;
+		cv::Canny(dx, dy, edges, 20, 20);
+		
+		int nedgePoint = 0;
+		for_each_1(DWHN1(edges), [&nedgePoint](uchar m) {
+			if (m != 0)
+				++nedgePoint;
+			});
+
+		std::vector<ModelPoint> points;
+		points.reserve(maxPoints);
+
+		CVRProjector prj(rr, imgSize);
+
+		int nstep = __max(1, nedgePoint / maxPoints);
+		nedgePoint = 0;
+		float wsum = 1e-6f;
+		for_each_1c(DWHN1(edges), [&nedgePoint, nstep, &rr, &points, prj, roi, &dx, &dy, &wsum](uchar m, int x, int y) {
+			if (m != 0)
+			{
+				if (++nedgePoint % nstep == 0)
+				{
+					float z = rr.depth(y, x);
+					if (fabs(z - 1.0f) > 1e-6f)
+					{
+						ModelPoint t;
+						t.pt = prj.unproject(float(x + roi.x), float(y + roi.y), z);
+						t.w = abs(dx(y, x)) + abs(dy(y, x));
+						points.push_back(t);
+						wsum += t.w;
+					}
+				}
+			}});
+		for (auto& p : points)
+			p.w /= wsum;
+		return points;
+	}
+	Mat1f getImageField(Mat img, int nLayers=2)
+	{
+		img = cv::convertBGRChannels(img, 1);
+
+		auto getF = [](const Mat1b& gray, Size dsize) {
+			Mat1f dx, dy;
+			cv::Sobel(gray, dx, CV_32F, 1, 0);
+			cv::Sobel(gray, dy, CV_32F, 0, 1);
+			for_each_2(DWHN1(dx), DN1(dy), [](float& dx, float dy) {
+				dx = fabs(dx) + fabs(dy);
+				});
+			if (dx.size() != dsize)
+				dx = imscale(dx, dsize, INTER_LINEAR);
+			return dx;
+		};
+
+		Mat1f f=getF(img,img.size());
+		for (int i = 1; i < nLayers; ++i)
+		{
+			img = imscale(img, 0.5);
+			f += getF(img, f.size());
+		}
+		float vmax = cv::maxElem(f);
+		f *= 1.f / vmax;
+		return 1.f-f;
+	}
+	void operator()(CVRender& render, Pose& pose, const Matx33f& K, Mat img, Rect roi, int nItrs = 10, float eps=1e-6f)
+	{
+		//return;
+
+		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
+		if (roi.empty())
+			return;
+
+		std::vector<ModelPoint> modelPoints;
+		std::thread t1([&modelPoints,this,&render,&pose,&K,&img,&roi]() {
+			modelPoints = this->getModelPoints(render, pose, K, img.size(), roi);
+			});
+
+		Mat1f f = getImageField(img(roi));
+		Mat1f dfx, dfy;
+		cv::Sobel(f, dfx, CV_32F, 1, 0);
+		cv::Sobel(f, dfy, CV_32F, 0, 1);
+
+		t1.join();
+
+		int itr = 0;
+		for (; itr < nItrs; ++itr)
+		{
+			const Matx33f R = pose.R;
+			const Point3f t = pose.t;
+
+			const float fx = K(0, 0), fy = K(1, 1);
+
+			auto* vcp = &modelPoints[0];
+			int npt = (int)modelPoints.size();
+
+			Matx66f JJ = Matx66f::zeros();
+			Vec6f J(0, 0, 0, 0, 0, 0);
+			float nptw = 0;
+
+			for (int i = 0; i < npt; ++i)
+			{
+				Point3f Q = R * vcp[i].pt + t;
+				Point3f q = K * Q;
+				{
+					const int x = int(q.x / q.z + 0.5), y = int(q.y / q.z + 0.5);
+					if (uint(x - roi.x) >= uint(roi.width) || uint(y - roi.y) >= uint(roi.height))
+						continue;
+
+					const float X = Q.x, Y = Q.y, Z = Q.z;
+					/*      |fx/Z   0   -fx*X/Z^2 |   |a  0   b|
+					dq/dQ = |                     | = |        |
+							|0    fy/Z  -fy*Y/Z^2 |   |0  c   d|
+					*/
+					const float a = fx / Z, b = -fx * X / (Z * Z), c = fy / Z, d = -fy * Y / (Z * Z);
+
+					Point2f pt(q.x / q.z, q.y / q.z);
+
+					int dy = y - roi.y, dx = x - roi.x;
+
+					Vec2f nx(dfx(dy, dx), dfy(dy, dx));
+					nx = normalize(nx);
+
+					Vec3f n_dq_dQ(nx[0] * a, nx[1] * c, nx[0] * b + nx[1] * d);
+
+					auto dt = n_dq_dQ.t() * R;
+					auto dR = vcp[i].pt.cross(Vec3f(dt.val[0], dt.val[1], dt.val[2]));
+
+					Vec6f j(dt.val[0], dt.val[1], dt.val[2], dR.x, dR.y, dR.z);
+
+					float w = vcp[i].w;
+
+					J += w * f(dy, dx) * j;
+
+					JJ += w * j * j.t();
+					nptw += w;
+				}
+			}
+
+			const float lambda = 5000.f * nptw / 200.f;
+
+			for (int i = 0; i < 3; ++i)
+				JJ(i, i) += lambda * 100.f;
+
+			for (int i = 3; i < 6; ++i)
+				JJ(i, i) += lambda;
+
+			int ec = 0;
+
+			Vec6f p;// = -JJ.inv() * J;
+			if (solve(JJ, -J, p))
+			{
+				cv::Vec3f dt(p[0], p[1], p[2]);
+				cv::Vec3f rvec(p[3], p[4], p[5]);
+				Matx33f dR;
+				cv::Rodrigues(rvec, dR);
+
+				pose.t = pose.R * dt + pose.t;
+				pose.R = pose.R * dR;
+
+				float diff = p.dot(p);
+				if (diff < eps * eps)
+					break;
+			}
+		}
+		//printf("\nnItr=%d    ", itr);
+	}
+};
+
+
+
 
 //struct Projector
 //{
@@ -1479,8 +1668,9 @@ public:
 
 		return false;
 	}
-
 };
+
+
 
 inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT)
 {
@@ -1602,6 +1792,10 @@ inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const 
 	}
 
 	pose = dpose;
+
+	Refiner refine;
+	curROI = this->getCurROI(K, pose);
+	refine(*_render, pose, K, img, curROI);
 
 	return errMin;
 }
@@ -1893,7 +2087,7 @@ public:
 		_obj.loadModel(streamPtr, model, _modelScale);
 
 		ff::CommandArgSet args(argstr);
-		_isLocalTracking = false;// args.getd<bool>("local", false);
+		_isLocalTracking = true;// args.getd<bool>("local", false);
 		_useInnerSeg = true;// args.getd<bool>("useInnserSeg", false);
 		_cur.tracked = false;
 	}
