@@ -2083,11 +2083,11 @@ class BaseTracker1
 public:
 	void loadModel(re3d::Model &model, const std::string& argstr)
 	{
-		auto streamPtr = model.getData().getStream("v1.BaseTracker");
+		auto streamPtr = model.getData().getStream("v1.BaseTracker",true);
 		_obj.loadModel(streamPtr, model, _modelScale);
 
 		ff::CommandArgSet args(argstr);
-		_isLocalTracking = true;// args.getd<bool>("local", false);
+		_isLocalTracking = false;// args.getd<bool>("local", false);
 		_useInnerSeg = true;// args.getd<bool>("useInnserSeg", false);
 		_cur.tracked = false;
 	}
