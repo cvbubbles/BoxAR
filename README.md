@@ -7,7 +7,7 @@
 
 从以下地址获取CVF，解压到任意路径，假设为PATH/CVF
 
-> https://gitee.com/cvbubbles/cvf.git
+> https://github.com/cvbubbles/cvf
 
 2.CVFX下载
 
