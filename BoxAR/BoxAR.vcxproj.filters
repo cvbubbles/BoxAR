@@ -23,7 +23,7 @@
       <UniqueIdentifier>{770c08b1-91a7-4505-bee9-32778e765657}</UniqueIdentifier>
     </Filter>
     <Filter Include="glrender">
-      <UniqueIdentifier>{01bd97a3-cee4-4e9f-86f6-6ee4e91ef240}</UniqueIdentifier>
+      <UniqueIdentifier>{339198ef-abde-451f-a2d3-0323cf200104}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -54,11 +54,11 @@
     <ClCompile Include="core\coreobjs.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="test_trackers2.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\envs\glad\src\glad.c">
       <Filter>glrender</Filter>
+    </ClCompile>
+    <ClCompile Include="test_trackers2.cpp">
+      <Filter>tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

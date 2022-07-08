@@ -12,7 +12,7 @@ typedef BaseTracker1  BaseTracker;
 
 class PoseScore
 {
-	enum { N_LAYERS = 2 };
+	enum{N_LAYERS=2};
 
 	Mat2f         _grad;
 public:
@@ -40,14 +40,14 @@ public:
 			if (l != N_LAYERS - 1)
 				gray = imscale(gray, 0.5);
 		}
-		_grad = cv::mergeChannels(dx, dy);
+		_grad=cv::mergeChannels(dx, dy);
 	}
-	float getScore(BaseTracker* baseTracker, const RigidPose& pose, const Matx33f& K, float dotT = 0.9f)
+	float getScore(BaseTracker *baseTracker, const RigidPose& pose, const Matx33f &K, float dotT=0.9f)
 	{
 		std::vector<Point2f>  points, normals;
 		baseTracker->getProjectedContours(K, pose, points, &normals);
 
-		float wsum = 1e-6, score = 0;
+		float wsum = 1e-6, score=0;
 		int   nmatch = 0;
 		for (size_t i = 0; i < points.size(); ++i)
 		{
@@ -96,12 +96,12 @@ public:
 class DPose
 {
 public:
-	int        imodel = -1;
+	int        imodel=-1;
 	RigidPose  pose;
 	//float      score;
 	Vec6f      vpose, svpose;
 public:
-
+	
 	bool isTracked() const
 	{
 		return pose.score > 1e-3f;
@@ -124,7 +124,7 @@ public:
 	Mat					 img;
 	std::vector<DPose>   poseTracked;
 	std::vector<DPose>   poseDetected;
-	bool        locked = false;
+	bool        locked=false;
 };
 
 class Tracker
@@ -137,7 +137,7 @@ private:
 	std::vector<DModel>               _models;
 	std::deque<Frame>                 _frames;
 	ff::Thread                        _bgThread;
-	Frame* _detectedFrame = nullptr;
+	Frame* _detectedFrame=nullptr;
 public:
 	virtual void init(ModelSet* modelSet, ArgSet* args)
 	{
@@ -159,17 +159,17 @@ public:
 		}
 		_frames.clear();
 	}
-	void _detect(Frame& frame, Matx33f K)
+	void _detect(Frame &frame, Matx33f K)
 	{
 		FrameData fd;
 		fd.cameraK = K;
-
+		
 		_detector->pro(frame.img, fd);
 
 		frame.poseDetected.clear();
 		for (auto& v : fd.objs)
 		{
-			auto pose = v.pose.get<std::vector<RigidPose>>();
+			auto pose=v.pose.get<std::vector<RigidPose>>();
 			if (!pose.empty())
 			{
 				DPose t;
@@ -180,7 +180,7 @@ public:
 		}
 		_detectedFrame = &frame;
 	}
-	void _detectedToCurFrame(Frame& cur, const Matx33f& K, PoseScore& poseScore)
+	void _detectedToCurFrame(Frame &cur, const Matx33f &K, PoseScore &poseScore)
 	{
 		if (_detectedFrame)
 		{
@@ -190,7 +190,7 @@ public:
 			{
 				int imodel = obj.imodel;
 				RigidPose tarPose;
-				_models[imodel].baseTracker.track(_detectedFrame->img, obj.pose, cur.img, tarPose, K);
+				_models[imodel].baseTracker.track(_detectedFrame->img,obj.pose,cur.img, tarPose, K);
 				DPose t;
 				t.imodel = imodel;
 				t.pose = tarPose;
@@ -208,7 +208,7 @@ public:
 
 		return fd.objs.size();
 	}
-
+	
 	virtual int pro(const Mat& img, FrameData& fd, ff::ArgSet* args)
 	{
 		_frames.push_back(Frame());
@@ -240,10 +240,10 @@ public:
 
 		cur.poseTracked.resize(_models.size());
 
-		if (_frames.size() > 1)
+		if (_frames.size()>1)
 		{
 			auto& prev = _frames[_frames.size() - 2];
-
+			
 			for (int i = 0; i < (int)prev.poseTracked.size(); ++i)
 			{
 				//int imodel = prev.poseTracked[i].imodel;
@@ -258,7 +258,7 @@ public:
 					t.imodel = i;
 					t.pose = pose;
 
-					cur.poseTracked[i] = t;
+					cur.poseTracked[i]=t;
 				}
 			}
 		}
@@ -268,8 +268,8 @@ public:
 			for (auto& d : cur.poseDetected)
 			{
 				DPose* t = &cur.poseTracked[d.imodel];
-
-				if (t->pose.score + 0.05 < d.pose.score)
+				
+				if (t->pose.score+0.05 < d.pose.score)
 				{
 					*t = d;
 
@@ -278,7 +278,7 @@ public:
 			}
 		}
 
-		if (false)
+		if(false)
 		{
 			int nf = (int)_frames.size();
 
@@ -289,14 +289,14 @@ public:
 				auto isTracked = [this, nf, i](int fi) {
 					return this->_frames[fi].poseTracked[i].isTracked();
 				};
-				auto fpose = [this, i](int fi) -> DPose& {
+				auto fpose = [this, i](int fi) -> DPose&{
 					return this->_frames[fi].poseTracked[i];
 				};
 				if (nf >= 4 && isTracked(nf - 1) && isTracked(nf - 2) && isTracked(nf - 3) & isTracked(nf - 4))
 				{
 					auto svpose2 = 0.25f * fpose(nf - 4).vpose + 0.5f * fpose(nf - 3).vpose + 0.25f * fpose(nf - 2).vpose;
-					auto svpose1 = 0.25f * fpose(nf - 3).vpose + 0.5f * fpose(nf - 2).vpose + 0.25f * fpose(nf - 1).vpose;
-					fpose(nf - 1).svpose = svpose1 * 2.f - svpose2;
+					auto svpose1 = 0.25f * fpose(nf-3).vpose + 0.5f * fpose(nf-2).vpose + 0.25f * fpose(nf-1).vpose;
+					fpose(nf-1).svpose = svpose1*2.f - svpose2;
 				}
 			}
 		}

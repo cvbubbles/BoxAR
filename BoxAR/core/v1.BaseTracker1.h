@@ -1842,8 +1842,8 @@ inline void Templates::build(CVRModel& model)
 				int bwy = __min(roi.y, fgMask.rows - roi.y - roi.height);
 				if (__min(bwx, bwy) < 5/* || __max(roi.width,roi.height)<fgMask.cols/4*/)
 				{
-					imshow("mask", fgMask);
-					cv::waitKey();
+					//imshow("mask", fgMask);
+					//cv::waitKey();
 				}
 			}
 
@@ -2083,11 +2083,11 @@ class BaseTracker1
 public:
 	void loadModel(re3d::Model& model, const std::string& argstr)
 	{
-		auto streamPtr = model.getData().getStream("v1.BaseTracker");
+		auto streamPtr = model.getData().getStream("v1.BaseTracker", true);
 		_obj.loadModel(streamPtr, model, _modelScale);
 
 		ff::CommandArgSet args(argstr);
-		_isLocalTracking = true;// args.getd<bool>("local", false);
+		_isLocalTracking = false;// args.getd<bool>("local", false);
 		_useInnerSeg = true;// args.getd<bool>("useInnserSeg", false);
 		_cur.tracked = false;
 	}
@@ -2175,10 +2175,7 @@ public:
 		if (scale < 1.0)
 		{
 			tar = imscale(tar, scale, INTER_LINEAR);
-			for (int i = 0; i < 3; ++i)
-				K(0, i) *= scale;
-			for (int i = 0; i < 3; ++i)
-				K(1, i) *= scale;
+			K = cvrm::scaleK(K, scale);
 		}
 
 		_K = K;

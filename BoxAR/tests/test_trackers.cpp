@@ -12,14 +12,14 @@ void test_detectors()
 	//std::string modelFile = R"(.\scan\3ds-model\bottle2\bottle2.ply)", videoFile = R"(.\BoxAR\video\bottle2-5.avi)";
 	//std::string modelFile = R"(.\scan\3ds-model\bottle3\bottle3.ply)", videoFile = R"(.\test\bottle3.mp4)";
 	//std::string modelFile = R"(.\test\3d\box1.3ds)", videoFile = R"(.\test\box1.mp4)";
-	//std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
-	std::string modelFile = R"(.\scan\vase\obj\qinghuaci.obj)", videoFile = R"(.\scan\vase\test3.mp4)";
+	std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
+	//std::string modelFile = R"(.\test\3d\car.3ds)", videoFile = R"(.\test\car.mp4)";
 	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
 
 	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
-	//std::string modelFile = R"(.\BoxAR\model\test2\mesh.obj)", videoFile = R"(.\BoxAR\video\test2_video\test2_1.mp4)";
+	//std::string modelFile = R"(.\tests\model\test2\mesh.obj)", videoFile = R"(.\tests\video\test2_video\test2_1.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test3\mesh.obj)", videoFile = R"(.\BoxAR\video\test3_video\test3_1.mp4)";
-
+	//std::string modelFile = R"(.\scan\vase\obj\qinghuaci.obj)", videoFile = R"(.\scan\vase\test7.mp4)";
 	//config model-set
 	ModelSet models;
 
@@ -68,6 +68,7 @@ void test_detectors()
 		time_t beg = clock();
 		detector->pro(img, fd);
 		printf("\rspeed=%.1ffps       ", 1000.0f/int(clock() - beg));
+
 		//show results
 		Mat dimg = redist::renderResults(img, fd, models, true, true, false, false);
 		imshow("result", dimg);
