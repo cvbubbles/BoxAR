@@ -7,7 +7,7 @@
 
 从以下地址获取CVF，解压到任意路径，假设为PATH/CVF
 
-> https://gitee.com/cvbubbles/cvf.git
+> https://github.com/cvbubbles/cvf
 
 2.CVFX下载
 
@@ -21,7 +21,7 @@
 
 - 使用文本编辑器打开local.props，修改D_CVF和D_CVFX为本地路径（PATH/CVF和PATH/CVFX）,D_CLOUD可以不修改，示例：
 
-![image-20220705084144058](readme_images\image-20220705084144058.png)
+![image-20220705084144058](readme_images/image-20220705084144058.png)
 
 - 打开local.h，将D_CLOUD设置为CVF和CVFX的上层目录（PATH），示例：
 
