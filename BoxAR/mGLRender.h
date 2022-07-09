@@ -125,18 +125,13 @@ cv::Mat glRender(const std::string& obj_path,
 
     // configure global opengl state
     // -----------------------------
-    glEnable(GL_MULTISAMPLE);
-    glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
-    glEnable(GL_SAMPLE_ALPHA_TO_ONE);
-    glEnable(GL_SAMPLE_COVERAGE);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);// add phong
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);// add phong
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);// add phong
     // build and compile shaders
     // -------------------------
     Shader testShader("vertex.glsl", "frag.glsl");
 
-    MModel ourModel(obj_path); 
+    MModel mModel(obj_path); 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // render loop
@@ -166,11 +161,13 @@ cv::Mat glRender(const std::string& obj_path,
         testShader.setMat4("projection", projection);
         testShader.setMat4("view", view);
         
-        testShader.setVec3("viewPos", glm::vec3(0.0f, 0.0f, 3.0f));
-        testShader.setVec3("lightPos1", glm::vec3(18.0f, 18.0f, -13.6f));
-        testShader.setVec3("lightPos2", glm::vec3(-18.0f, 18.0f, -13.6f));
-        testShader.setVec3("lightPos3", glm::vec3(0.0f, 0.0f, 30.0f));
-        testShader.setInt("blinn", true);
+        //testShader.setVec3("viewPos", glm::vec3(0.0f, 0.0f, 30.0f));
+        //testShader.setVec3("lightPos1", glm::vec3(8.0f, 8.0f, -3.6f));
+        //testShader.setVec3("lightPos2", glm::vec3(-8.0f, 8.0f, -3.6f));
+        //testShader.setVec3("lightPos3", glm::vec3(8.0f, -8.0f, -3.6f));
+        //testShader.setVec3("lightPos4", glm::vec3(-8.0f, -8.0f, -3.6f));
+        //testShader.setVec3("lightPos5", glm::vec3(0.0f, 0.0f, 30.0f));
+        //testShader.setInt("blinn", true);
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
@@ -183,15 +180,16 @@ cv::Mat glRender(const std::string& obj_path,
                 normalMatrix[i][j] = (view * model)[i][j];
             }
         }
-        normalMatrix = glm::transpose(glm::inverse(normalMatrix));
-        testShader.setMat3("uNormalMatrix", normalMatrix);
+        //normalMatrix = glm::transpose(glm::inverse(normalMatrix));
+        //testShader.setMat3("uNormalMatrix", normalMatrix);
         testShader.setMat4("model", model);
-        ourModel.Draw(testShader);
-
+        mModel.Draw(testShader);
+        res = saveImageUsingCV(bgImg, width, height, returnDepth);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
+        //res = saveImageUsingCV(bgImg, width, height, returnDepth);
         glfwPollEvents();
         //glfwSetWindowShouldClose(window, true);
         res = saveImageUsingCV(bgImg, width, height, returnDepth);

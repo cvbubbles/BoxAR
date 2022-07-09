@@ -12,10 +12,10 @@ void test_detectors()
 	//std::string modelFile = R"(.\scan\3ds-model\bottle2\bottle2.ply)", videoFile = R"(.\BoxAR\video\bottle2-5.avi)";
 	//std::string modelFile = R"(.\scan\3ds-model\bottle3\bottle3.ply)", videoFile = R"(.\test\bottle3.mp4)";
 	//std::string modelFile = R"(.\test\3d\box1.3ds)", videoFile = R"(.\test\box1.mp4)";
-	std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
+	//std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
 	//std::string modelFile = R"(.\test\3d\car.3ds)", videoFile = R"(.\test\car.mp4)";
 	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
-
+	std::string modelFile = R"(.\scan\vase\obj\qinghuaci.obj)", videoFile = R"(.\scan\vase\test8.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
 	//std::string modelFile = R"(.\tests\model\test2\mesh.obj)", videoFile = R"(.\tests\video\test2_video\test2_1.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test3\mesh.obj)", videoFile = R"(.\BoxAR\video\test3_video\test3_1.mp4)";
@@ -40,7 +40,9 @@ void test_detectors()
 	cv::VideoCapture cap;
 	cap.open(videoFile);
 	//cap.open(0+cv::CAP_DSHOW);
-
+	int fourcc = CV_FOURCC('M', 'P', '4', '2');
+	VideoWriter writer("output998_tracker.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
+		720), true);
 	float dK[] = {
 		1.324595302424838110e+03, 0.000000000000000000e+00, 6.460060955956646467e+02,
 		0.000000000000000000e+00, 1.330463970754883576e+03, 3.568279021773695945e+02,
@@ -72,7 +74,7 @@ void test_detectors()
 		//show results
 		Mat dimg = redist::renderResults(img, fd, models, true, true, false, false);
 		imshow("result", dimg);
-
+		writer.write(dimg);
 		if (cv::waitKey(1) == 'q')
 			break;
 		
