@@ -11,7 +11,7 @@
 
 2.CVFX下载
 
-服务器下载：/home/aa/cvfx.zip，解压到任意路径，假设为PATH/CVFX
+从志愿者提供的链接中下载cvfx.zip，解压到任意路径，假设为PATH/CVFX
 
 3.BoxAR代码下载
 
