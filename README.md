@@ -4,7 +4,10 @@
 >
 > main分支仅包含跟踪代码
 >
-> ar分支在此基础上可以生成简单的ar效果演示
+> ar分支在此基础上可以生成简单的ar效果演示视频
+>
+> **Attention : 将代码的redist_replace文件夹中的两个文件替换CVF路径下re3d/utils路径下的对应文件**
+
 ## CVF/CVFX下载及配置
 
 1.CVF下载
@@ -15,7 +18,7 @@
 
 2.CVFX下载
 
-从志愿者提供的链接中下载cvfx.zip，解压到任意路径，假设为PATH/CVFX
+从[阿里云链接](https://www.aliyundrive.com/s/2QtACdUkzHU)中下载cvfx.zip，解压到任意路径，假设为PATH/CVFX
 
 3.BoxAR代码下载
 
@@ -75,7 +78,13 @@
 
 ## 3D模型和测试视频
 
+以下链接中有演示视频中的花朵和青花瓷模型，具体使用方法在跟踪算法一节
+
+https://www.aliyundrive.com/s/sh4q42cJJKb
+
 # 长方体模型生成
+
+> Attention: 将tools文件夹下的calibration.cpp在VS中添加到项目
 
 ## 准备工作
 
@@ -165,7 +174,7 @@
 
 3、角度尽量要多
 
-4、**（很重要）**保证标定板在你的视频中始终是完全出现的，不要出现遮挡和拍摄不全的情况
+4、**（很重要）保证标定板在你的视频中始终是完全出现的，不要出现遮挡和拍摄不全的情况**
 
 在视频/摄像头模式下按g进行标定，总共进行20张图片的截取，当右下角提示calibration后即可退出或等待视频完毕。
 
@@ -179,13 +188,13 @@
 
 # 跟踪算法及AR渲染
 
-**Attention : 将代码的redist_replace文件夹中的两个文件替换CVF路径下re3d/utils路径下的对应文件**
+
 
 ## 跟踪算法
 
 如果要使用单独的跟踪算法，在main.cpp中选择exec("test_detectors")执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。在test_tracker.cpp中的test_detectors()函数中更改modelFile和videoFile变量可以选择待跟踪物体模型和测试视频。
 
-如果要得到以下图片所示的演示效果，可以解压志愿者提供的flowerandvase.zip，将modelFile换成qinghuaci.obj所在路径，videoFile选择解压后的任意一测试视频路径
+如果要得到以下图片所示的演示效果，可以解压从上文链接中下载的flowerandvase.zip，将modelFile换成qinghuaci.obj所在路径，videoFile选择解压后的任意一测试视频路径
 
 ![image-20220707103143120](readme_images/image-20220707103143120.png)
 
@@ -226,9 +235,9 @@
 
 渲染代码主体来自[learnOpenGL](https://learnopengl-cn.github.io/)，各函数功能可参考该教程
 
-# 可实现的功能
+# 可实现的功能（扩展方向）
 
-仓库里的代码仅仅实现了一个非常简单的demo生成，你可以在此基础上进行修改从而实现更高级的AR效果，可改进的方向包括但不限于：
+仓库里的代码仅仅实现了一个非常简单的demo生成，可以说与真正的AR相差甚远，你可以在此基础上进行修改，实现更高级的AR效果，可改进的方向包括但不限于：
 
 - 发挥想象设计更高级的AR场景
 - 实现一个实时的AR场景
