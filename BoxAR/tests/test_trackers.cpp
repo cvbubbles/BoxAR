@@ -83,6 +83,7 @@ void test_detectors()
 
 		++fi;
 	}
+	
 }
 
 CMD_BEG()

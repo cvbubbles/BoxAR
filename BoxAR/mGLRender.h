@@ -77,28 +77,15 @@ cv::Mat saveImageUsingCV(cv::Mat& bgImg, int w, int h, cv::Mat1f& bgDepth)
     //cv::waitKey(0);
     return img;
 }
-cv::Mat glRender(const std::string& obj_path, 
-    const cv::Matx44f& cv_view, const cv::Matx44f& cv_projection, 
-    int width, int height,
-    cv::Mat& bgImg, cv::Mat1f& returnDepth)
-//int main()
+
+void glRender(const std::string& obj_path,
+    const cv::Matx44f& cv_view, const cv::Matx44f& cv_projection,
+    int width, int height)
 {
-    //int width = 960;
-    //int height = 540;
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
+    
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(width, height, "gl_show", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width, height, "", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -108,9 +95,6 @@ cv::Mat glRender(const std::string& obj_path,
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -119,8 +103,9 @@ cv::Mat glRender(const std::string& obj_path,
         std::cout << "Failed to initialize GLAD" << std::endl;
         exit(-1);
     }
-
+    
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+    
     stbi_set_flip_vertically_on_load(true);
 
     // configure global opengl state
@@ -161,44 +146,20 @@ cv::Mat glRender(const std::string& obj_path,
         testShader.setMat4("projection", projection);
         testShader.setMat4("view", view);
         
-        //testShader.setVec3("viewPos", glm::vec3(0.0f, 0.0f, 30.0f));
-        //testShader.setVec3("lightPos1", glm::vec3(8.0f, 8.0f, -3.6f));
-        //testShader.setVec3("lightPos2", glm::vec3(-8.0f, 8.0f, -3.6f));
-        //testShader.setVec3("lightPos3", glm::vec3(8.0f, -8.0f, -3.6f));
-        //testShader.setVec3("lightPos4", glm::vec3(-8.0f, -8.0f, -3.6f));
-        //testShader.setVec3("lightPos5", glm::vec3(0.0f, 0.0f, 30.0f));
-        //testShader.setInt("blinn", true);
+        
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
-        //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        //model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-        glm::mat3 normalMatrix;
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                normalMatrix[i][j] = (view * model)[i][j];
-            }
-        }
-        //normalMatrix = glm::transpose(glm::inverse(normalMatrix));
-        //testShader.setMat3("uNormalMatrix", normalMatrix);
+       
         testShader.setMat4("model", model);
         mModel.Draw(testShader);
-        res = saveImageUsingCV(bgImg, width, height, returnDepth);
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
-        //res = saveImageUsingCV(bgImg, width, height, returnDepth);
         glfwPollEvents();
-        //glfwSetWindowShouldClose(window, true);
-        res = saveImageUsingCV(bgImg, width, height, returnDepth);
     }
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
-    glfwTerminate();
-    return res;
+    //glfwTerminate();
 }
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
