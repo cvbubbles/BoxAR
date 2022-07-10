@@ -1237,7 +1237,12 @@ public:
 	}
 	int  _getNearestView(const Vec3f& viewDir)
 	{
-		CV_Assert(fabs(viewDir.dot(viewDir) - 1.f) < 1e-3f);
+		//CV_Assert(fabs(viewDir.dot(viewDir) - 1.f) < 1e-3f);
+		if (!(fabs(viewDir.dot(viewDir) - 1.f) < 1e-3f))
+		{
+			printf("error: invalid view dir=(%.2f,%.2f,%.2f)\n", viewDir[0], viewDir[1], viewDir[2]);
+			return 0;
+		}
 #if 0
 		int im = -1;
 		float vcosMax = -1;
@@ -2170,10 +2175,13 @@ public:
 		if (!_cur.tracked)
 			return false;
 
+		//_cur.pose.t[0] = sqrt(-1);
+
 		auto roi=_obj.templ.getCurROI(K, _cur.pose);
 		double scale = sqrt(200*200 / (double(roi.width) * roi.height) );
 		if (scale < 1.0)
 		{
+			scale = __max(scale, 0.25f);
 			tar = imscale(tar, scale, INTER_LINEAR);
 			K = cvrm::scaleK(K, scale);
 		}
