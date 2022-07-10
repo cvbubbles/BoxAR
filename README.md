@@ -185,6 +185,8 @@
 
 如果要使用单独的跟踪算法，在main.cpp中选择exec("test_detectors")执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。在test_tracker.cpp中的test_detectors()函数中更改modelFile和videoFile变量可以选择待跟踪物体模型和测试视频。
 
+如果要得到以下图片所示的演示效果，可以解压志愿者提供的flowerandvase.zip，将modelFile换成qinghuaci.obj所在路径，videoFile选择解压后的任意一测试视频路径
+
 ![image-20220707103143120](readme_images/image-20220707103143120.png)
 
 通过更改下图所示路径可以设置当前目录：
@@ -206,13 +208,19 @@
 
 需要注意的是，推荐导出视频格式为avi，在上图中的Size设置时注意与要生成视频的图片保持相同。
 
-要更改渲染的模型，可以在test_trackers2.cpp的obj_path变量处修改
+要更改渲染的模型，可以在test_trackers2.cpp的obj_path变量处修改，如果要得到下图的效果，在上述修改modelFile和videoFile的基础上，将obj_path设置为解压后的flower/test.obj所在路径。
 
 生成视频的效果如下图所示，其中花为渲染合成到原始图像的模型，你可以通过选择自己的测试视频、被跟踪模型、被渲染模型实现更高级的AR效果
 
 ![image-20220709165644248](readme_images/image-20220708163133727.png)
 
+**Attention:如果使用其他的模型没法得到预想的效果，可能是因为待跟踪物体模型和渲染合成模型之间的坐标系存在较大差异，可以使用meshlab进行调整（或者写一段读取obj文件直接修改的代码），如果使用meshlab，打开一个obj文件：**
 
+![image-20220710171928213](readme_images/image-20220710171928213.png)
+
+**在下图所示菜单选项中的Transform项可以缩放、平移、旋转模型**
+
+![image-20220710172115765](readme_images/image-20220710172115765.png)
 
 # 渲染代码说明
 
