@@ -137,6 +137,12 @@ https://www.aliyundrive.com/s/sh4q42cJJKb
 
 ## 相机内参获取
 
+在程序中我们使用了默认的相机内参，如下图所示，其中参数1为图像尺寸，参数2为焦距和图像高度之比。为了获取准确的内参，请使用本节说明进行相机的标定。
+
+![image-20220711075544853](readme_images/image-20220711075544853.png)
+
+
+
 我们在代码中使用了opencv自带的张氏标定法的例子
 
 如果你想了解原理与具体的操作，可以查看[opencv 的官方链接](https://docs.opencv.org/4.x/d4/d94/tutorial_camera_calibration.html)
