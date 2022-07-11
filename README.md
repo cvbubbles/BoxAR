@@ -6,7 +6,11 @@
 >
 > ar分支在此基础上可以生成简单的ar效果演示视频
 >
-> **Attention : 将代码的redist_replace文件夹中的两个文件替换CVF路径下re3d/utils路径下的对应文件**
+> **Attention : 使用代redist_replace文件夹中的两个文件替换CVF路径下re3d/utils路径下的对应文件**
+>
+> **Attention:被替换掉的是cvf/re3d/utils路径下的文件**
+>
+> **Attention:如果只是使用main分支或者只测试跟踪算法，不需要做替换修改**
 
 ## CVF/CVFX下载及配置
 
