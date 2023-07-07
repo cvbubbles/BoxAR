@@ -256,7 +256,6 @@ public:
 	virtual int pro(const Mat& img, FrameData& fd, ff::ArgSet*)
 	{
 		//using namespace detector;
-
 		Mat camImgDesc;
 		std::vector<KeyPoint> camImgKP;
 

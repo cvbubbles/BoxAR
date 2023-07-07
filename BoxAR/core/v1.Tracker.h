@@ -165,7 +165,6 @@ public:
 		fd.cameraK = K;
 		
 		_detector->pro(frame.img, fd);
-
 		frame.poseDetected.clear();
 		for (auto& v : fd.objs)
 		{
@@ -211,6 +210,7 @@ public:
 	
 	virtual int pro(const Mat& img, FrameData& fd, ff::ArgSet* args)
 	{
+		//cout << "tracker pro" << endl;
 		_frames.push_back(Frame());
 		auto& cur = _frames.back();
 		cur.img = img.clone();
@@ -225,7 +225,9 @@ public:
 			if (!_detectedFrame)
 			{
 				cur.locked = true;
+				//std::cout << "test _detect branchbbranch" << std::endl;
 				_bgThread.post([this, &fd, &cur]() {
+
 					this->_detect(cur, fd.cameraK);
 					});
 			}
