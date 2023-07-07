@@ -7,13 +7,13 @@ Mat1b getRenderMask(const Mat1f &depth, float eps=1e-6f);
 
 void  getRenderContour(const CVRResult &rr, std::vector<Point3f> &cpt3, double approxEPS=1.0, std::vector<Point> *cpt2=nullptr, cv::Mat1b *mask=nullptr);
 
-Rect getBoundingBox2D(const std::vector<Point> &pts);
-
-Rect_<float> getBoundingBox2D(const std::vector<Point2f> &pts);
-
-Rect getBoundingBox2D(const std::vector<std::vector<Point>> &vpts);
-
-Rect_<float> getBoundingBox2D(const std::vector<std::vector<Point2f>> &vpts);
+//Rect getBoundingBox2D(const std::vector<Point> &pts);
+//
+//Rect_<float> getBoundingBox2D(const std::vector<Point2f> &pts);
+//
+//Rect getBoundingBox2D(const std::vector<std::vector<Point>> &vpts);
+//
+//Rect_<float> getBoundingBox2D(const std::vector<std::vector<Point2f>> &vpts);
 
 void getBoundingBox3D(const std::vector<Point3f> &pts, Point3f &cornerMin, Point3f &cornerMax);
 

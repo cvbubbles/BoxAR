@@ -41,11 +41,17 @@ void test_detectors()
 	cap.open(videoFile);
 	//cap.open(0+cv::CAP_DSHOW);
 
+	//cap.set(CAP_PROP_FRAME_WIDTH, 1280);
+	//cap.set(CAP_PROP_FRAME_HEIGHT, 720);
+
 	float dK[] = {
 		1.324595302424838110e+03, 0.000000000000000000e+00, 6.460060955956646467e+02,
 		0.000000000000000000e+00, 1.330463970754883576e+03, 3.568279021773695945e+02,
 		0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00
 	};
+
+	VideoWriterEx vw;
+	//vw.set("f:/out.mp4", 25);
 
 	int fi = 0;
 	Mat img;
@@ -61,7 +67,7 @@ void test_detectors()
 		if (fi == 0)
 		{
 			//camera intrinsics, here we use a default value
-			fd.cameraK = cvrm::defaultK(img.size(), 1.6);
+			fd.cameraK = cvrm::defaultK(img.size(), 1.5);
 			//memcpy(fd.cameraK.val, dK, sizeof(dK));
 		}
 
@@ -73,9 +79,12 @@ void test_detectors()
 		Mat dimg = redist::renderResults(img, fd, models, true, true, false, false);
 		imshow("result", dimg);
 
-		if (cv::waitKey(1) == 'q')
+		int waitCode = cv::waitKey(1);
+		if (waitCode == 'q')
 			break;
 		
+		//vw.writeEx(dimg, waitCode);
+
 		/*if (fd.objs.front().score < 0.8)
 			cv::waitKey();*/
 

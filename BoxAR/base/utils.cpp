@@ -98,32 +98,32 @@ void  getRenderContour(const CVRResult &rr, std::vector<Point3f> &cpt3, double a
 		*_mask = mask;
 }
 
-template<typename _Tp>
-Rect_<_Tp> _getBoundingBox2D(const std::vector<Point_<_Tp>> &pts)
-{
-	_Tp L = INT_MAX, T = INT_MAX, R = 0, B = 0;
-	for (auto &p : pts)
-	{
-		if (p.x < L)
-			L = p.x;
-		if (p.x > R)
-			R = p.x;
-		if (p.y < T)
-			T = p.y;
-		if (p.y > B)
-			B = p.y;
-	}
-	return Rect_<_Tp>(L, T, R - L, B - T);
-}
+//template<typename _Tp>
+//Rect_<_Tp> _getBoundingBox2D(const std::vector<Point_<_Tp>> &pts)
+//{
+//	_Tp L = INT_MAX, T = INT_MAX, R = 0, B = 0;
+//	for (auto &p : pts)
+//	{
+//		if (p.x < L)
+//			L = p.x;
+//		if (p.x > R)
+//			R = p.x;
+//		if (p.y < T)
+//			T = p.y;
+//		if (p.y > B)
+//			B = p.y;
+//	}
+//	return Rect_<_Tp>(L, T, R - L, B - T);
+//}
 
-Rect getBoundingBox2D(const std::vector<Point> &pts)
-{
-	return _getBoundingBox2D(pts);
-}
-Rect_<float> getBoundingBox2D(const std::vector<Point2f> &pts)
-{
-	return _getBoundingBox2D(pts);
-}
+//Rect getBoundingBox2D(const std::vector<Point> &pts)
+//{
+//	return _getBoundingBox2D(pts);
+//}
+//Rect_<float> getBoundingBox2D(const std::vector<Point2f> &pts)
+//{
+//	return _getBoundingBox2D(pts);
+//}
 
 template<typename _Tp>
 Rect_<_Tp> _getBoundingBox2D(const std::vector<std::vector<Point_<_Tp>>> &vpts)

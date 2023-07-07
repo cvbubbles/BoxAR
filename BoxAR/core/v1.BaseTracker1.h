@@ -6,6 +6,7 @@
 #include"v1.DetectorModelData.h"
 #include"opencv2/xfeatures2d.hpp"
 #include"BFC/thread.h"
+#include"opencv2/optflow.hpp"
 
 _VX_BEG(v1)
 
@@ -22,33 +23,33 @@ inline Mat1b getRenderMask(const Mat1f& depth, float eps = 1e-6)
 	return mask;
 }
 
-
-template<typename _Tp>
-inline Rect_<_Tp> _getBoundingBox2D(const std::vector<Point_<_Tp>>& pts)
-{
-	_Tp L = INT_MAX, T = INT_MAX, R = 0, B = 0;
-	for (auto& p : pts)
-	{
-		if (p.x < L)
-			L = p.x;
-		if (p.x > R)
-			R = p.x;
-		if (p.y < T)
-			T = p.y;
-		if (p.y > B)
-			B = p.y;
-	}
-	return Rect_<_Tp>(L, T, R - L, B - T);
-}
-
-inline Rect getBoundingBox2D(const std::vector<Point>& pts)
-{
-	return _getBoundingBox2D(pts);
-}
-inline Rect_<float> getBoundingBox2D(const std::vector<Point2f>& pts)
-{
-	return _getBoundingBox2D(pts);
-}
+//
+//template<typename _Tp>
+//inline Rect_<_Tp> _getBoundingBox2D(const std::vector<Point_<_Tp>>& pts)
+//{
+//	_Tp L = INT_MAX, T = INT_MAX, R = 0, B = 0;
+//	for (auto& p : pts)
+//	{
+//		if (p.x < L)
+//			L = p.x;
+//		if (p.x > R)
+//			R = p.x;
+//		if (p.y < T)
+//			T = p.y;
+//		if (p.y > B)
+//			B = p.y;
+//	}
+//	return Rect_<_Tp>(L, T, R - L, B - T);
+//}
+//
+//inline Rect getBoundingBox2D(const std::vector<Point>& pts)
+//{
+//	return _getBoundingBox2D(pts);
+//}
+//inline Rect_<float> getBoundingBox2D(const std::vector<Point2f>& pts)
+//{
+//	return _getBoundingBox2D(pts);
+//}
 
 struct CPoint
 {
@@ -1440,7 +1441,44 @@ public:
 		auto fdx = cv::xfeatures2d::DAISY::create();
 		fdx->compute(img, kp, desc);
 	}
-	void _getModelPoints(const Matx33f& K, Pose pose, const Mat& img, Rect roi, std::vector<Point3f>& points, Mat& desc)
+
+	void _detectAndCompute2(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc)
+	{
+		Mat gray = cv::convertBGRChannels(img, 1);
+		
+		bool hasLargeRotation = false;
+		auto fd=cv::AKAZE::create(hasLargeRotation ? AKAZE::DESCRIPTOR_MLDB : AKAZE::DESCRIPTOR_MLDB_UPRIGHT,
+			0, 3, 0.001, 4, 4, KAZE::DIFF_PM_G2
+		);
+
+		//std::vector<Point2f> corners;
+		//cv::goodFeaturesToTrack(gray, corners, 200, 0.01, 5);
+
+		//kp.resize(corners.size());
+		//for (size_t i = 0; i < kp.size(); ++i)
+		//	kp[i].pt = corners[i];
+
+		//auto fdx = cv::xfeatures2d::DAISY::create();
+		//fdx->compute(img, kp, desc);
+		fd->detectAndCompute(gray, noArray(), kp, desc);
+	}
+
+	struct AuxData
+	{
+	public:
+		Mat  src, tar;
+		std::vector<Point2f>  srcPoints, tarPoints;
+	};
+	void showMatches(const AuxData& data)
+	{
+		if (data.src.empty() || data.tar.empty())
+			return;
+
+		Mat dimg=visMatch(cvtPoint(data.srcPoints), cvtPoint(data.tarPoints), data.src, data.tar);
+		imshow("matches", dimg);
+	}
+
+	void _getModelPoints(const Matx33f& K, Pose pose, const Mat& img, Rect roi, std::vector<Point3f>& points, Mat& desc, AuxData &auxData)
 	{
 		CVRMats mats;
 		mats.mModel = cvrm::fromR33T(pose.R, pose.t * _modelScale);
@@ -1458,9 +1496,11 @@ public:
 		for (auto& p : kp)
 		{
 			points.push_back(prj.unproject(p.pt + Point2f(roi.x, roi.y)) / _modelScale);
+			auxData.srcPoints.push_back(p.pt);
 		}
+		auxData.src = rr.img;
 	}
-	std::vector<PointMatch> calcPointMatches(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, float spaceDistT = 20.f)
+	std::vector<PointMatch> calcPointMatches(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, AuxData &auxData, float spaceDistT = 20.f)
 	{
 		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
 		if (roi.empty())
@@ -1471,10 +1511,11 @@ public:
 
 		std::vector<Point3f>  selPoints;
 		Mat selDesc;
+		//AuxData auxData;
 
 		std::thread t1(
-			[this, &K,&pose,&img,&roi,&selPoints,&selDesc]() {
-				this->_getModelPoints(K, pose, img, roi, selPoints, selDesc);
+			[this, &K,&pose,&img,&roi,&selPoints,&selDesc, &auxData]() {
+				this->_getModelPoints(K, pose, img, roi, selPoints, selDesc, auxData);
 			});
 
 		std::vector<KeyPoint> imKp;
@@ -1487,19 +1528,30 @@ public:
 			return std::vector<PointMatch>();
 
 		auto matcher = cv::DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
-
-		std::vector<std::vector<DMatch>> knnMatches;
-		matcher->knnMatch(imDesc, selDesc, knnMatches, 2);
-		/*matcher->add(selDesc);
-		matcher->knnMatch(imDesc, knnMatches, 2);*/
+		//cv::BFMatcher matcher(imDesc.depth() == CV_8UC1 ? NORM_HAMMING : NORM_L2);
 
 		std::vector<DMatch> matches;
+#if 1
+		std::vector<std::vector<DMatch>> knnMatches;
+		matcher->knnMatch(imDesc, selDesc, knnMatches, 2);
+
 		for (auto& km : knnMatches)
 		{
 			if (km[0].distance * 1.1 < km[1].distance)
 				matches.push_back(km[0]);
 		}
-
+#else
+		std::vector<DMatch> knnMatches, knnMatchesB;
+		matcher.match(imDesc, selDesc, knnMatches);
+		/*matcher->add(selDesc);
+		matcher->knnMatch(imDesc, knnMatches, 2);*/
+		matcher.match(selDesc, imDesc, knnMatchesB);
+		for (auto& km : knnMatches)
+		{
+			if (knnMatchesB[km.trainIdx].trainIdx==km.queryIdx)
+				matches.push_back(km);
+		}
+#endif
 		Projector prj(K, pose.R, pose.t);
 		Point2f roiOffset(float(roi.x), float(roi.y));
 		spaceDistT *= spaceDistT;
@@ -1507,6 +1559,7 @@ public:
 		std::vector<PointMatch> pm;
 		pm.reserve(matches.size());
 
+		int n = 0;
 		for (auto& m : matches)
 		{
 			if (/*m.distance > distT ||*/ uint(m.trainIdx) > selPoints.size())
@@ -1522,109 +1575,182 @@ public:
 			tm.imPoint = q;
 
 			pm.push_back(tm);
+
+			auxData.srcPoints[n] = auxData.srcPoints[m.trainIdx];
+			auxData.tarPoints.push_back(imKp[m.queryIdx].pt);
+			++n;
 		}
+		auxData.tar = img(roi);
+		auxData.srcPoints.resize(n);
+
+		//showMatches(auxData);
+
 		//printf("\ndsum=%.2f np=%d\n", 0.f, pm.size());
 
 		return pm;
 	}
-	std::vector<PointMatch> calcPointMatches1(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, float spaceDistT = 20.f)
+
+	std::vector<PointMatch> calcPointMatches2(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, AuxData& auxData, float spaceDistT = 20.f)
 	{
-		pose.t *= 1.f / _modelScale;
-
-		auto mT = cvrm::fromR33T(pose.R, pose.t);
-
-		//auto fd = cv::ORB::create(200, 1.25, 2);
-		//auto fd = cv::AKAZE::create(5, 0, 3, 0.001, 4, 2);
-
-		std::vector<Point3f>  selPoints;
-		Mat selDesc;
-		//_detectorModelData->modelPoints.getSubsetWithView(mT, true, objSize, selPoints, selDesc, 1);
-		this->_getModelPoints(K, pose, img, roi, selPoints, selDesc);
-		printf("nsel=%d\n", selPoints.size());
-
 		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
-		if (roi.empty() || selPoints.empty())
+		if (roi.empty()||__max(roi.width,roi.height)<100)
 			return std::vector<PointMatch>();
 
-		Mat gray = cv::convertBGRChannels(img(roi), 1);
-		std::vector<KeyPoint> imKp;
-		Mat imDesc;
-		//fd->detectAndCompute(gray, Mat(), imKp, imDesc);
-		this->_detectAndCompute(img(roi), imKp, imDesc);
+		CVRMats mats;
+		mats.mModel = cvrm::fromR33T(pose.R, pose.t);
+		mats.mProjection = cvrm::fromK(K, img.size(), 0.1, 10);
 
-		if (imKp.empty())
-			return std::vector<PointMatch>();
+		auto rr = _render->exec(mats, img.size(), CVRM_IMAGE | CVRM_DEPTH, CVRM_DEFAULT, nullptr, roi);
 
-		/*Mat dimg;
-		cv::drawKeypoints(img(roi), imKp, dimg);
-		imshow("kpimg", dimg);
-		cv::waitKey();*/
+		Mat src, tar;
+		cvtColor(rr.img, src, CV_BGR2GRAY);
+		cvtColor(img(roi), tar, CV_BGR2GRAY);
 
-		std::vector<DMatch> matches;
+		//auto flowPtr = cv::FarnebackOpticalFlow::create();
+		auto flowPtr = cv::optflow::createOptFlow_DIS(cv::optflow::DISOpticalFlow::PRESET_MEDIUM);
+		Mat2f flowF, flowR;
+		flowPtr->calc(src, tar, flowF);
+		flowPtr->calc(tar, src, flowR);
 
-		//cv::BFMatcher matcher(NORM_HAMMING, false);
-		//cv::BFMatcher matcher(NORM_L2, false);
-		//matcher.match(imDesc, selDesc, matches);
-		//matcher.knnMatch
-
-		/*FMIndex knn;
-		knn.build(selDesc, FMIndex::LINEAR);
-		knn.match(imDesc, matches);*/
-		auto matcher = cv::DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
-		matcher->match(imDesc, selDesc, matches);
-
-		//std::sort(matches.begin(), matches.end());
-		//matches.resize(matches.size() / 2);
-		auto minDistance = std::min_element(matches.begin(), matches.end())->distance;
-		auto distT = minDistance * 4.f;
-
-		Projector prj(K, pose.R, pose.t);
-		Point2f roiOffset(float(roi.x), float(roi.y));
-		spaceDistT *= spaceDistT;
-
-		std::vector<PointMatch> pm;
-		std::vector<Point2f>    dv;
-		pm.reserve(matches.size());
-		dv.reserve(matches.size());
-
-		Point2f dmean(0.f, 0.f);
-
-		for (auto& m : matches)
+		std::vector<Point2f> corners;
+		cv::goodFeaturesToTrack(src, corners, 200, 0.01, 5);
+		int n = 0;
+		for (auto& p : corners)
 		{
-			if (m.distance > distT || uint(m.trainIdx) > selPoints.size())
-				continue;
-
-			Point2f q = roiOffset + imKp[m.queryIdx].pt;
-			Point2f d = prj(selPoints[m.trainIdx]) - q;
-			if (d.dot(d) > spaceDistT)
-				continue;
-
-			PointMatch tm;
-			tm.modelPoint = selPoints[m.trainIdx] * _modelScale;
-			tm.imPoint = q;
-
-			pm.push_back(tm);
-			dv.push_back(d);
-			dmean += d;
-		}
-		if (!pm.empty())
-		{
-			dmean *= 1.f / float(dv.size());
-			float dsum = 0;
-			for (size_t i = 0; i < pm.size(); ++i)
+			int x = int(p.x + 0.5), y = int(p.y + 0.5);
+			const float* f = flowF.ptr<float>(y, x);
+			int tx = int(x + f[0] + 0.5f), ty = int(y + f[1] + 0.5f);
+			if (uint(tx) < uint(flowR.cols) && uint(ty) < uint(flowR.rows))
 			{
-				Point2f ddv = dv[i] - dmean;
-				float d = ddv.dot(ddv);
-				pm[i].weight = exp(-d / 4.f);
-				dsum += sqrt(ddv.dot(ddv));
+				const float* tf = flowR.ptr<float>(ty, tx);
+				const float dx = f[0] + tf[0], dy = f[1] + tf[1];
+				float err = dx * dx + dy * dy;
+				if (err < 1.5f)
+				{
+					corners[n++] = p;
+				}
 			}
-			dsum /= pm.size();
-
-			printf("\ndsum=%.2f np=%d\n", dsum, pm.size());
 		}
+		corners.resize(n);
 
-		return pm;
+		std::vector<PointMatch> matches;
+		
+		CVRProjector prj(rr, img.size());
+		for (auto& p : corners)
+		{
+			PointMatch pm;
+			pm.modelPoint=prj.unproject(p + Point2f(roi.x, roi.y));
+			Point2f q = p + flowF.at<Point2f>(int(p.y + 0.5f), int(p.x + 0.5f));
+			pm.imPoint = Point2f(roi.x, roi.y) + q;
+			pm.weight = 1.f;
+			matches.push_back(pm);
+			auxData.tarPoints.push_back(q);
+		}
+		
+		auxData.src = rr.img;
+		auxData.tar = img(roi);
+		auxData.srcPoints = corners;
+		
+		return matches;
 	}
+	//std::vector<PointMatch> calcPointMatches1(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, float spaceDistT = 20.f)
+	//{
+	//	pose.t *= 1.f / _modelScale;
+
+	//	auto mT = cvrm::fromR33T(pose.R, pose.t);
+
+	//	//auto fd = cv::ORB::create(200, 1.25, 2);
+	//	//auto fd = cv::AKAZE::create(5, 0, 3, 0.001, 4, 2);
+
+	//	std::vector<Point3f>  selPoints;
+	//	Mat selDesc;
+	//	//_detectorModelData->modelPoints.getSubsetWithView(mT, true, objSize, selPoints, selDesc, 1);
+	//	this->_getModelPoints(K, pose, img, roi, selPoints, selDesc);
+	//	printf("nsel=%d\n", selPoints.size());
+
+	//	roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
+	//	if (roi.empty() || selPoints.empty())
+	//		return std::vector<PointMatch>();
+
+	//	Mat gray = cv::convertBGRChannels(img(roi), 1);
+	//	std::vector<KeyPoint> imKp;
+	//	Mat imDesc;
+	//	//fd->detectAndCompute(gray, Mat(), imKp, imDesc);
+	//	this->_detectAndCompute(img(roi), imKp, imDesc);
+
+	//	if (imKp.empty())
+	//		return std::vector<PointMatch>();
+
+	//	/*Mat dimg;
+	//	cv::drawKeypoints(img(roi), imKp, dimg);
+	//	imshow("kpimg", dimg);
+	//	cv::waitKey();*/
+
+	//	std::vector<DMatch> matches;
+
+	//	//cv::BFMatcher matcher(NORM_HAMMING, false);
+	//	//cv::BFMatcher matcher(NORM_L2, false);
+	//	//matcher.match(imDesc, selDesc, matches);
+	//	//matcher.knnMatch
+
+	//	/*FMIndex knn;
+	//	knn.build(selDesc, FMIndex::LINEAR);
+	//	knn.match(imDesc, matches);*/
+	//	auto matcher = cv::DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
+	//	matcher->match(imDesc, selDesc, matches);
+
+	//	//std::sort(matches.begin(), matches.end());
+	//	//matches.resize(matches.size() / 2);
+	//	auto minDistance = std::min_element(matches.begin(), matches.end())->distance;
+	//	auto distT = minDistance * 4.f;
+
+	//	Projector prj(K, pose.R, pose.t);
+	//	Point2f roiOffset(float(roi.x), float(roi.y));
+	//	spaceDistT *= spaceDistT;
+
+	//	std::vector<PointMatch> pm;
+	//	std::vector<Point2f>    dv;
+	//	pm.reserve(matches.size());
+	//	dv.reserve(matches.size());
+
+	//	Point2f dmean(0.f, 0.f);
+
+	//	for (auto& m : matches)
+	//	{
+	//		if (m.distance > distT || uint(m.trainIdx) > selPoints.size())
+	//			continue;
+
+	//		Point2f q = roiOffset + imKp[m.queryIdx].pt;
+	//		Point2f d = prj(selPoints[m.trainIdx]) - q;
+	//		if (d.dot(d) > spaceDistT)
+	//			continue;
+
+	//		PointMatch tm;
+	//		tm.modelPoint = selPoints[m.trainIdx] * _modelScale;
+	//		tm.imPoint = q;
+
+	//		pm.push_back(tm);
+	//		dv.push_back(d);
+	//		dmean += d;
+	//	}
+	//	if (!pm.empty())
+	//	{
+	//		dmean *= 1.f / float(dv.size());
+	//		float dsum = 0;
+	//		for (size_t i = 0; i < pm.size(); ++i)
+	//		{
+	//			Point2f ddv = dv[i] - dmean;
+	//			float d = ddv.dot(ddv);
+	//			pm[i].weight = exp(-d / 4.f);
+	//			dsum += sqrt(ddv.dot(ddv));
+	//		}
+	//		dsum /= pm.size();
+
+	//		printf("\ndsum=%.2f np=%d\n", dsum, pm.size());
+	//	}
+
+	//	return pm;
+	//}
 };
 
 
@@ -1675,6 +1801,12 @@ public:
 	}
 };
 
+std::thread::id  theMainThreadID = std::this_thread::get_id();
+
+inline bool isMainThread()
+{
+	return theMainThreadID == std::this_thread::get_id();
+}
 
 
 inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT)
@@ -1683,10 +1815,11 @@ inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const 
 	Rect curROI = this->getCurROI(K, pose, &curView);
 
 	Optimizer dfr;
+	AuxData auxData;
 
 	std::thread t1(
-		[this, &K, &pose, &img, curROI, &dfr]() {
-			dfr._pointMatches = this->calcPointMatches(K, pose, img, curROI, curROI.size());
+		[this, &K, &pose, &img, curROI, &dfr, &auxData]() {
+			dfr._pointMatches = this->calcPointMatches(K, pose, img, curROI, curROI.size(), auxData);
 		});
 
 	Rect roi = curROI;
@@ -1695,7 +1828,12 @@ inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const 
 	roi = rectOverlapped(roi, Rect(0, 0, curProb.cols, curProb.rows));
 	dfr.computeScanLines(curProb, roi);
 
+	//time_t beg = clock();
 	t1.join();
+	//printf("\rspeed=%.1ffps       ", 1000.0f / int(clock() - beg));
+
+	//if(isMainThread())
+	//	this->showMatches(auxData);
 
 	Optimizer::PoseData dpose;
 	static_cast<Pose&>(dpose) = pose;
