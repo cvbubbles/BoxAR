@@ -1,34 +1,25 @@
 # 基本配置说明
 
-> 以下配置过程均需要在VS2019中（或VS2019 SDK）进行
+> 以下配置过程基本环境：
 >
-> main分支仅包含跟踪代码
+> ​	Windows + VS2019（或VS2019 SDK）
 >
-> ar分支在此基础上可以生成简单的ar效果演示视频
+> 各分支内容：
 >
-> **Attention : 使用代redist_replace文件夹中的两个文件替换CVF路径下re3d/utils路径下的对应文件**
+> ​	main分支仅包含跟踪代码
 >
-> **Attention:被替换掉的是cvf/re3d/utils路径下的文件**
+> ​	ar分支在此基础上可以生成简单的ar效果演示视频
 >
-> **Attention:如果只是使用main分支或者只测试跟踪算法，不需要做替换修改**
 
-## CVF/CVFX下载及配置
+## 相关内容下载及配置
 
-1.CVF下载
+1.BoxAR相关环境及测试模型、视频下载：[Google Drive](https://drive.google.com/drive/folders/1pekXpuN13F6YUA_k9wWGy0RT71mENaCL?usp=drive_link)
 
-从以下地址获取CVF，解压到任意路径，假设为PATH/CVF
-
-> https://github.com/cvbubbles/cvf
-
-2.CVFX下载
-
-从[阿里云链接](https://www.aliyundrive.com/s/2QtACdUkzHU)中下载cvfx.zip，解压到任意路径，假设为PATH/CVFX
-
-3.BoxAR代码下载
+2.BoxAR代码下载
 
 使用git clone命令或者下载zip文件将代码从仓库复制到本地
 
-4.配置CVF/CVFX
+3.配置CVF/CVFX
 
 - 使用文本编辑器打开local.props，修改D_CVF和D_CVFX为本地路径（PATH/CVF和PATH/CVFX）,D_CLOUD可以不修改，示例：
 
@@ -82,15 +73,20 @@
 
 ## 3D模型和测试视频
 
-以下链接中有演示视频中的花朵和青花瓷模型，具体使用方法在跟踪算法一节
+说明开始的链接中有演示视频中的花朵和青花瓷模型，具体使用方法在跟踪算法一节
 
-https://www.aliyundrive.com/s/sh4q42cJJKb
+# 总体流程
 
-# 长方体模型生成
+- 生成长方体模型
+- 标定相机内参
+- 在离线视频或实时视频中跟踪生成模型，得到位姿
+- 以被跟踪模型为定位，实现想要的AR效果
+
+## 长方体模型生成
 
 > Attention: 将tools文件夹下的calibration.cpp在VS中添加到项目
 
-## 准备工作
+### 准备工作
 
 1.准备模型
 
@@ -109,7 +105,7 @@ https://www.aliyundrive.com/s/sh4q42cJJKb
 - images 用来存放图片
 - model 用来存放模型文件
 
-## 模型放置与图片拍摄
+### 模型放置与图片拍摄
 
 测量模型的长宽高 单位： 毫米(mm)
 
@@ -125,7 +121,7 @@ https://www.aliyundrive.com/s/sh4q42cJJKb
 
 ![image-20220706164822603](readme_images/image-20220706164822603.png)
 
-## 模型生成代码
+### 模型生成代码
 
 1. 依次按照提示输入长、宽、高（mm）
 
@@ -196,11 +192,9 @@ https://www.aliyundrive.com/s/sh4q42cJJKb
 
 
 
-# 跟踪算法及AR渲染
+## 跟踪算法及AR实现
 
-
-
-## 跟踪算法
+### 跟踪算法
 
 如果要使用单独的跟踪算法，在main.cpp中选择exec("test_detectors")执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。在test_tracker.cpp中的test_detectors()函数中更改modelFile和videoFile变量可以选择待跟踪物体模型和测试视频。
 
@@ -215,7 +209,7 @@ https://www.aliyundrive.com/s/sh4q42cJJKb
 
 ![image-20220707103552202](readme_images/image-20220707103552202.png)
 
-## AR渲染
+### AR渲染
 
 如果要在跟踪的基础上通过渲染实现简单的AR效果，需要在main.cpp中选择执行exec("test_ardetectors");
 
@@ -231,7 +225,7 @@ https://www.aliyundrive.com/s/sh4q42cJJKb
 
 生成视频的效果如下图所示，其中花为渲染合成到原始图像的模型，你可以通过选择自己的测试视频、被跟踪模型、被渲染模型实现更高级的AR效果
 
-![image-20220709165644248](readme_images/image-20220708163133727.png)
+![](readme_images\image-20230707095219981.png)
 
 **Attention:如果使用其他的模型没法得到预想的效果，可能是因为待跟踪物体模型和渲染合成模型之间的坐标系存在较大差异，可以使用meshlab进行调整（或者写一段读取obj文件直接修改的代码），如果使用meshlab，打开一个obj文件：**
 
@@ -245,13 +239,11 @@ https://www.aliyundrive.com/s/sh4q42cJJKb
 
 渲染代码主体来自[learnOpenGL](https://learnopengl-cn.github.io/)，各函数功能可参考该教程
 
-# 可实现的功能（扩展方向）
+# 扩展方向
 
-仓库里的代码仅仅实现了一个非常简单的demo生成，可以说与真正的AR相差甚远，你可以在此基础上进行修改，实现更高级的AR效果，可改进的方向包括但不限于：
+仓库里的代码仅仅实现了一个非常简单的demo生成，要实现更高级的AR效果，可改进的方向包括但不限于：
 
-- 发挥想象设计更高级的AR场景
-- 实现一个实时的AR场景
-- 加入交互
-- 改进渲染部分
-- 改进跟踪算法
+- 发挥想象，设计更高级的AR场景
+- 交互
+- 跟换实时性更好的跟踪算法
 - ……

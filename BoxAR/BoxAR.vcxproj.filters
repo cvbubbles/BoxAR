@@ -60,6 +60,9 @@
     <ClCompile Include="test_trackers2.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="calibration.cpp">
+      <Filter>tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\base.h">
@@ -101,19 +104,16 @@
     <ClInclude Include="mesh.h">
       <Filter>glrender</Filter>
     </ClInclude>
-    <ClInclude Include="mGLRender.h">
-      <Filter>glrender</Filter>
-    </ClInclude>
     <ClInclude Include="model.h">
       <Filter>glrender</Filter>
     </ClInclude>
     <ClInclude Include="shader.h">
       <Filter>glrender</Filter>
     </ClInclude>
-    <ClInclude Include="shader_m.h">
+    <ClInclude Include="stb_image.h">
       <Filter>glrender</Filter>
     </ClInclude>
-    <ClInclude Include="stb_image.h">
+    <ClInclude Include="backdrawer.h">
       <Filter>glrender</Filter>
     </ClInclude>
   </ItemGroup>

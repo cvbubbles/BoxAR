@@ -83,7 +83,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>D:\envs\glad\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\envs\glfw-3.3.4.bin.WIN64\lib-vc2019;$(LibraryPath)</LibraryPath>
+    <LibraryPath>D:\envs\cvfx_new\opencv3413\bin-v142\x64\Release;D:\envs\glfw-3.3.4.bin.WIN64\lib-vc2019;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -134,14 +134,15 @@
       <PreprocessorDefinitions>CVRENDER_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>./;../;../include/;$(D_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opencv_world3413.lib;CVRender.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\envs\freeglut-3.2.1\build\bin\Release;D:\envs\cvf\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -149,6 +150,7 @@
     <ClCompile Include="base\base.cpp" />
     <ClCompile Include="base\index.cpp" />
     <ClCompile Include="base\utils.cpp" />
+    <ClCompile Include="calibration.cpp" />
     <ClCompile Include="core\coreobjs.cpp" />
     <ClCompile Include="impl.cpp" />
     <ClCompile Include="impl_cvrender.cpp" />
@@ -158,6 +160,7 @@
     <ClCompile Include="tools\gen_box_model.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="backdrawer.h" />
     <ClInclude Include="base\base.h" />
     <ClInclude Include="base\def.h" />
     <ClInclude Include="base\index.h" />
@@ -171,10 +174,8 @@
     <ClInclude Include="core\vxbase.h" />
     <ClInclude Include="cmdstd.h" />
     <ClInclude Include="mesh.h" />
-    <ClInclude Include="mGLRender.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="shader.h" />
-    <ClInclude Include="shader_m.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>

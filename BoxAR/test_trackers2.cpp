@@ -1,145 +1,186 @@
 #pragma once
 #include"cmdstd.h"
-#include"mGLRender.h"
-_STATIC_BEG
+#include "backdrawer.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <opencv2/opencv.hpp>
 
+#include <model.h>
+#include <camera.h>
+
+#include <iostream>
+_STATIC_BEG
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	// make sure the viewport matches the new window dimensions; note that width and 
+	// height will be significantly larger than specified on retina displays.
+	glViewport(0, 0, width, height);
+}
+void processInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+}
 void test_ardetectors()
 {
 	app()->setTempDir("D:/projects/boxar");
-	
+
 	ff::setCurrentDirectory("D:/projects/boxar/BoxAR/");
-
-	//std::string modelFile = R"(.\scan\3ds-model\bottle2\bottle2.ply)", videoFile = R"(.\BoxAR\video\bottle2-5.avi)";
-	//std::string modelFile = R"(.\scan\3ds-model\bottle3\bottle3.ply)", videoFile = R"(.\test\bottle3.mp4)";
-	//std::string modelFile = R"(.\test\3d\box11.ply)", videoFile = R"(.\test\box1.mp4)";
-	//std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
-	//std::string modelFile = R"(.\test\3d\car.3ds)", videoFile = R"(.\test\car.mp4)";
-	//std::string modelFile = R"(.\test\cat.obj)", videoFile = R"(.\test\cat.avi)";
-
-	//std::string modelFile = R"(.\tests\model\test1\mesh.obj)", videoFile = R"(.\tests\video\test1_video\test1_1.mp4)";
-	//std::string modelFile = R"(.\BoxAR\model\test2\mesh.obj)", videoFile = R"(.\BoxAR\video\test2_video\test2_1.mp4)";
-	//std::string modelFile = R"(.\BoxAR\model\test3\mesh.obj)", videoFile = R"(.\BoxAR\video\test3_video\test3_1.mp4)";
+	/*********************************模型设置*************************************/
+	std::string trackedModelFile = "D:\\projects\\boxar\\BoxAR\\scan\\vase\\obj\\qinghuaci.obj", videoFile = R"(.\scan\vase\test2.mp4)";
 	//std::string modelFile = R"(.\scan\obj-model\doll3\doll3.obj)", videoFile = R"(.\scan\obj-model\doll3\test1.mp4)";
-	std::string modelFile = R"(.\scan\vase\obj\qinghuaci.obj)", videoFile = R"(.\scan\vase\test9.mp4)";
-	// D:\projects\boxar\BoxAR\scan\vase\obj
 	//config model-set
 	ModelSet models;
-
+	string obj_path = "D:\\projects\\boxar\\BoxAR\\scan\\flower\\test.obj";
 	{
-		std::vector<ModelInfos> modelInfos = modelInfosFromSingleFile(modelFile, "re3d");
+		std::vector<ModelInfos> modelInfos = modelInfosFromSingleFile(trackedModelFile, "re3d");
 		models.set(modelInfos);
 	}
-
 	auto detector = FrameProc::create("v1.Tracker");
-
 	//init detector
 	ff::CommandArgSet args;
 	//args.setArgs("-d2dModelFile f:/sdk/torch_models/model_re3d6_v1.ts -d2dScoreT 0.5");
 	detector->init(&models, &args);
-
-	FrameData fd;
-
+	
+	/*********************************VideoCapture*************************************/
 	cv::VideoCapture cap;
-	cap.open(videoFile);
 	//cap.open(0);
-
+	cap.open(videoFile);
+	FrameData fd;
 	float dK[] = {
 		1.324595302424838110e+03, 0.000000000000000000e+00, 6.460060955956646467e+02,
 		0.000000000000000000e+00, 1.330463970754883576e+03, 3.568279021773695945e+02,
 		0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00
 	};
-
-
 	int fi = 0;
 	Mat img;
 	int fourcc = CV_FOURCC('M', 'P', '4', '2');
-	VideoWriter writer("output1000_phong.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
-		720) , true);
-	VideoWriter writer2("output1000_input.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
-		720), true);
-	VideoWriter writer3("output1000_tracker.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
-		720), true);
-	string obj_path = "C:\\Users\\Tien\\Desktop\\flower\\flower\\test.obj";
+	//VideoWriter writer3("output.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,720), true);
+	
 	
 
-	cv::Matx44f mProjection;
-	cv::Matx44f mView;
-
-
-	// glfw: initialize and configure
-   // ------------------------------
+	/*********************************glfw初始设置*************************************/
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-	while (cap.read(img))
+
+	GLFWwindow* window = glfwCreateWindow(1280, 720, "AR_tracker", NULL, NULL);
+	//GLFWwindow* window = glfwCreateWindow(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT), "", NULL, NULL);
+	if (window == NULL)
 	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		exit(-1);
+	}
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		exit(-1);
+	}
+	stbi_set_flip_vertically_on_load(true);
+
+
+	/*********************************背景*************************************/
+	Shader texShader("texture.vs", "texture.fs");
+	vector<float> tex_vertices = {
+		1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+		1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+		-1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+		-1.0f,  1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
+	};
+	vector<unsigned int> indices = {
+		0, 1, 3, // first triangle
+		1, 2, 3  // second triangle
+	};
+	BackDrawer bgDrawer(tex_vertices, indices, &texShader);
+
+	/*********************************相关声明*************************************/
+	Shader testShader("vertex.glsl", "frag.glsl");
+	MModel mModel(obj_path);
+	MModel mTrackedModel(trackedModelFile);
+	cv::Matx44f mProjection;
+	cv::Matx44f mView;
+	glm::mat4 projection = glm::mat4(1.0f);
+	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 model = glm::mat4(1.0f);
+
+	glEnable(GL_DEPTH_TEST);
+	while(!glfwWindowShouldClose(window))
+	{
+		processInput(window);
+		//图像预处理
+		if (!cap.read(img))
+			break;
+		
 		if (img.rows > 1000)
 		{
 			img = imscale(img, 0.5);
 			flip(img, img, 0);
 			flip(img, img, 1);
 		}
-
-		if (fi == 0)
-		{
-			//camera intrinsics, here we use a default value
+		if (fi == 0) {
 			fd.cameraK = cvrm::defaultK(img.size(), 1.5);
-			//memcpy(fd.cameraK.val, dK, sizeof(dK));
+			mProjection = cvrm::fromK(fd.cameraK, img.size(), 0.1, 3000);
 		}
-
-		time_t beg = clock();
+		//跟踪获取位姿
+		//time_t beg = clock();
 		detector->pro(img, fd);
-		printf("\rtime=%d      ", int(clock() - beg));
+		//printf("detector time=%dms\n", int(clock() - beg));
+		cv::flip(img, img, 0);
 
-		//show results
+		//渲染背景
+		bgDrawer.Draw(img);
+		glClear(GL_DEPTH_BUFFER_BIT);
 		
-		cv::Mat1f returnDepth;
-		Mat dimg = redist::renderResults(img, returnDepth, fd, models, true, true, false, false);
-
-		mProjection = cvrm::fromK(fd.cameraK, img.size(), 0.1, 3000);
+		//cv::Mat1f returnDepth;
+		//Mat dimg = redist::renderResults(img, fd, models, true, true, false, false);
 		
-		//suppose there is only one object
-		if (1)
+		
+		//此处只有一个物体
+		for (int i = 0; i < (int)fd.objs.size(); i++)
 		{
-			cv::Mat ress;
-			for (int i = 0; i < (int)fd.objs.size(); i++)
-			{
 
-				re3d::ImageObject obj = fd.objs[i];
-				auto pose = obj.pose.get<std::vector<RigidPose>>().front();
+			re3d::ImageObject obj = fd.objs[i];
+			auto pose = obj.pose.get<std::vector<RigidPose>>().front();
 				
+			mView = cvrm::fromR33T(pose.R, pose.t);
 
-				mView = cvrm::fromR33T(pose.R, pose.t);
+			//time_t ren_beg = clock();
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 				
-				//mView = cvrm::fromR33T(pose.R, pose.t);
-				time_t ren_beg = clock();
-				glRender(obj_path, mView, mProjection,img.cols,img.rows);
-				printf("\r render time=%d      ", int(clock() - ren_beg));
-				ress = saveImageUsingCV(img, img.cols, img.rows, returnDepth);
-				
-			}
-			
-			if (ress.rows != 0)
+			cv::Mat res;
 			{
-				cv::imshow("ar_res", ress);
-				waitKey(5);
-				writer.write(ress);
-				writer2.write(img);
-				writer3.write(dimg);
+				testShader.use();
+				for (int k = 0; k < 4; k++)
+				{
+					for (int j = 0; j < 4; j++)
+					{
+						view[k][j] = mView(k, j);
+						projection[k][j] = mProjection(k, j);
+					}
+				}
+				testShader.setMat4("projection", projection);
+				testShader.setMat4("view", view);
+				testShader.setMat4("model", model);
+				mTrackedModel.Draw(testShader);		
+				mModel.Draw(testShader);
 			}
-			
 		}
-		
 		++fi;
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
-	writer.release();
 	glfwTerminate();
 }
+	//writer.release();
+	
 
 CMD_BEG()
 CMD0("test_ardetectors", test_ardetectors)

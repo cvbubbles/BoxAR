@@ -1,7 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 #include <glad/glad.h>
-
+#include<GL/GL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #define STB_IMAGE_IMPLEMENTATION
@@ -206,13 +206,15 @@ private:
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma)
 {
     string filename = string(path);
-    filename = directory + '/' + filename;
-
+    cout << "Texture file name: " << filename << endl;
+    filename = directory + "\\" + filename;
+    cout <<"Texture file pull path: " << filename << endl;
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
-    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    stbi_uc* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, STBI_rgb);
+    cout << "stbi_load finish" << endl;
     if (data)
     {
         GLenum format;
@@ -222,8 +224,12 @@ unsigned int TextureFromFile(const char* path, const string& directory, bool gam
             format = GL_RGB;
         else if (nrComponents == 4)
             format = GL_RGBA;
-
         glBindTexture(GL_TEXTURE_2D, textureID);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // We will use linear interpolation for minifying filter
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        cout << "get format finish2" << endl;
+        //glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -231,7 +237,7 @@ unsigned int TextureFromFile(const char* path, const string& directory, bool gam
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
+        
         stbi_image_free(data);
     }
     else
