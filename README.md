@@ -15,6 +15,8 @@
 
 1.BoxAR相关环境及测试模型、视频下载：[Google Drive](https://drive.google.com/drive/folders/1pekXpuN13F6YUA_k9wWGy0RT71mENaCL?usp=drive_link)
 
+> 如果网络有问题的话，可以在[cvbubbles/cvf](https://github.com/cvbubbles/cvf/tree/master)下载cvf进行配置
+
 2.BoxAR代码下载
 
 使用git clone命令或者下载zip文件将代码从仓库复制到本地
