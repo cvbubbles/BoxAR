@@ -21,13 +21,19 @@
 
 使用git clone命令或者下载zip文件将代码从仓库复制到本地
 
+> Attention：
+>
+> - 编译过程中，如果出现找不到***.lib的情况，在项目属性->链接器->常规->附加依赖项中把cvfx中对应lib文件的路径添加进去
+> - 运行过程中，如果出现无法打开***.dll的情况，最简单的方式是将cvfx中对应的dll文件复制到项目生成的可执行文件的相同文件夹中
+> - 运行过程中，如果出现filesystem异常的情况，则对应修改test_trackers.cpp或test_trackers2.cpp中的modelFile和videoFile变量（建议直接改为绝对路径）
+
 3.配置CVF/CVFX
 
-- 使用文本编辑器打开local.props，修改D_CVF和D_CVFX为本地路径（PATH/CVF和PATH/CVFX）,D_CLOUD可以不修改，示例：
+- 使用文本编辑器打开local.props，修改D_CVF和D_CVFX为本地路径（PATH/CVF和PATH/CVFX）,D_CLOUD同时要修改，应该设置为cvf和cvfx_new的父目录示例：
 
 ![image-20220705084144058](readme_images/image-20220705084144058.png)
 
-- 打开local.h，将D_CLOUD设置为CVF和CVFX的上层目录（PATH），示例：
+- 打开local.h，将D_CLOUD设置为CVF和CVFX的上层目录（PATH），保持与上步相同，示例：
 
   ![image-20220705084344041](readme_images/image-20220705084344041.png)
 
