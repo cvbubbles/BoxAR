@@ -1,29 +1,9 @@
 #pragma once
 #include"cmdstd.h"
-#include "backdrawer.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <opencv2/opencv.hpp>
-
-#include <model.h>
-#include <camera.h>
 
 #include <iostream>
 _STATIC_BEG
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	// make sure the viewport matches the new window dimensions; note that width and 
-	// height will be significantly larger than specified on retina displays.
-	glViewport(0, 0, width, height);
-}
-void processInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-}
+
 void test_ardetectors()
 {
 	app()->setTempDir("D:/projects/boxar");
@@ -95,51 +75,18 @@ void test_ardetectors()
 	int fourcc = CV_FOURCC('M', 'P', '4', '2');
 	//VideoWriter writer3("output.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,720), true);
 
-	/*********************************glfw初始设置*************************************/
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_VISIBLE, false);
-	/*
-	* 此处由于GLFW窗口已经设置为不可见，因此宽高参数可以随意设定
-	* 但建议还是与输入视频保持相同
-	*/
-	GLFWwindow* window = glfwCreateWindow(1280, 720, "AR_tracker", NULL, NULL);
-	//GLFWwindow* window = glfwCreateWindow(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT), "", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		exit(-1);
-	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		exit(-1);
-	}
-	stbi_set_flip_vertically_on_load(true);
-
-
-
 	/*********************************变换矩阵类声明************************************
 	* CVRMats是CVF提供的变换矩阵集合类，包含模型矩阵、投影矩阵、视图矩阵
 	* 具体三种矩阵的作用：https://zhuanlan.zhihu.com/p/386204250
 	*/
 	CVRMats mats;
 	
-	
-	glEnable(GL_DEPTH_TEST);
-	
-	while(!glfwWindowShouldClose(window))
+	while(cap.read(img))
 	{
-		processInput(window);
+		//processInput(window);
 		//图像预处理
-		if (!cap.read(img))
-			break;
+		//if (!cap.read(img))
+		//	break;
 		
 		if (img.rows > 1000)
 		{
@@ -209,10 +156,7 @@ void test_ardetectors()
 			*/
 		}
 		++fi;
-		glfwSwapBuffers(window);
-		glfwPollEvents();
 	}
-	glfwTerminate();
 }
 	
 CMD_BEG()
