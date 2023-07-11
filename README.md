@@ -1,5 +1,7 @@
 # 基本配置说明
 
+> 建议进行配置运行步骤之前，先浏览一遍本说明文档，已经有很多问题在说明文档中提及。
+>
 > 以下配置过程基本环境：
 >
 > ​	Windows + VS2019（或VS2019 SDK）
@@ -25,13 +27,13 @@
 >
 > - 编译过程中，如果出现找不到***.lib的情况，在项目属性->链接器->常规->附加依赖项中把cvfx中对应lib文件的路径添加进去
 > - 运行过程中，如果出现无法打开***.dll的情况，最简单的方式是将cvfx中对应的dll文件复制到项目生成的可执行文件的相同文件夹中
-> - 运行过程中，如果出现filesystem异常的情况，则对应修改test_trackers.cpp或test_trackers2.cpp中的modelFile和videoFile变量（建议直接改为绝对路径）
+> - 运行过程中，如果出现filesystem异常的情况，则对应修改test_trackers.cpp或test_trackers2.cpp中的modelFile和videoFile变量
 
 3.配置CVF/CVFX
 
 - 使用文本编辑器打开local.props，修改D_CVF和D_CVFX为本地路径（PATH/CVF和PATH/CVFX）,D_CLOUD同时要修改，应该设置为cvf和cvfx_new的父目录示例：
 
-![image-20220705084144058](readme_images/image-20220705084144058.png)
+![image-20230711171945223](readme_images\image-20230711171945223.png)
 
 - 打开local.h，将D_CLOUD设置为CVF和CVFX的上层目录（PATH），保持与上步相同，示例：
 
@@ -44,40 +46,7 @@
 - 正常情况下配置后可以编译运行代码，为了便于代码在不同机器上运行，请不要随便修改local.props之外的项目配置
 - 注意：目前仅配置了x64/release，如果需要跟踪调试，可以在release模式下禁用优化重新编译
 - 配置过程中如果遇到“pop_t：未声明的标识符”，可以参照[链接](https://blog.csdn.net/DLW__/article/details/122329784)修改
-
-## GLAD和GLFW配置
-
-1.GLAD下载
-
-到[GLAD官网](http://glad.dav1d.de/) 下载glad.zip，示例：
-
-![image-20220705090153678](readme_images/image-20220705090153678.png)
-
-解压glad.zip，得到include和src两个文件夹
-
-2.GLFW下载
-
-在仓库的glfw文件夹中有glfw.zip，解压到任意路径
-
-3.GLAD和GLFW配置
-
-在项目属性页VC++目录的包含目录中导入glad解压得到的include文件夹，将src文件夹中的glad.c添加到项目中
-
-导入include文件夹示例：
-
-![image-20220705093452219](readme_images/image-20220705093452219.png)
-
-将glad.c添加到项目示例：
-
-![image-20220708160948015](readme_images/image-20220708160948015.png)
-
-在项目属性页VC++目录的库目录中导入glfw解压后得到的lib-vc2019文件夹所在路径，示例：
-
-![image-20220705093640916](readme_images/image-20220705093640916.png)
-
-在项目属性页->链接器->附加依赖项中加入glfw3.lib，示例：
-
-![image-20220705093738892](readme_images/image-20220705093738892.png)
+- 如果出现getBoundingBox重载相关的错误，检查自己是否使用的是ar分支的代码
 
 ## 3D模型和测试视频
 
@@ -90,9 +59,14 @@
 - 在离线视频或实时视频中跟踪生成模型，得到位姿
 - 以被跟踪模型为定位，实现想要的AR效果
 
-## 长方体模型生成
+若要分别运行各个模块的代码，可以通过修改main.cpp的内容实现，其中
 
-> Attention: 将tools文件夹下的calibration.cpp在VS中添加到项目
+- `exec("test_detectors");`测试跟踪算法
+- `exec("test_ardetectors");`测试AR效果
+- `exec("tools.gen_box_model");`生成长方体模型
+- `exec("tools.calib_camera");`执行相机标定
+
+## 长方体模型生成
 
 ### 准备工作
 
@@ -204,13 +178,13 @@
 
 ### 跟踪算法
 
-如果要使用单独的跟踪算法，在main.cpp中选择exec("test_detectors")执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。在test_tracker.cpp中的test_detectors()函数中更改modelFile和videoFile变量可以选择待跟踪物体模型和测试视频。
+如果要使用单独的跟踪算法，在main.cpp中选择`exec("test_detectors")`执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。在test_tracker.cpp中的test_detectors()函数中更改`modelFile`和`videoFile`变量可以选择待跟踪物体模型和测试视频。
 
-如果要得到以下图片所示的演示效果，可以解压从上文链接中下载的flowerandvase.zip，将modelFile换成qinghuaci.obj所在路径，videoFile选择解压后的任意一测试视频路径
+如果要得到以下图片所示的演示效果，可以解压从上文链接中下载的测试模型和视频，将`modelFile`换成qinghuaci.obj所在路径，`videoFile`选择解压后的任意一测试视频路径。
 
 ![image-20220707103143120](readme_images/image-20220707103143120.png)
 
-通过更改下图所示路径可以设置当前目录：
+通过更改下图所示路径，建议将第一个设置为项目sln文件所在目录，第二个设置为代码文件所在目录：
 ![image-20220707103242347](readme_images/image-20220707103242347.png)
 
 如果之前的CVF/CVFX配置已经正确完成，在VS2019中运行，会得到类似下图所示结果
@@ -219,33 +193,34 @@
 
 ### AR渲染
 
-如果要在跟踪的基础上通过渲染实现简单的AR效果，需要在main.cpp中选择执行exec("test_ardetectors");
+实现AR效果需要将一个虚拟物体渲染到图像上，跟踪是为了实时获取传感器位姿，并利用该位姿渲染虚拟物体，所以整个过程需要的是：
 
-其测试函数在test_trackers2.cpp中，其中的路径修改方法与test_trackers.cpp中的相同
+- 被跟踪物体：在视频中真实出现的物体，并且有该物体的模型文件
+- 待渲染物体：用来实现虚实融合效果的物体，在视频中并不真实存在，只需要有该物体的模型文件即可
 
-如果之前GLAD/GLFW配置以经完成，运行代码后会在程序所在文件夹生成一段演示视频，其路径可按照需求在test_trackers2.cpp中的下图位置修改
+如果要在跟踪的基础上通过渲染实现简单的AR效果，需要在main.cpp中选择执行`exec("test_ardetectors");`其测试函数在test_trackers2.cpp中，其中有简要的注释，可以根据注释修改代码中的一些路径（包括被跟踪模型文件、测试视频、待渲染物体文件等）。
 
-![image-20220707104045828](readme_images/image-20220707104045828.png)
-
-需要注意的是，推荐导出视频格式为avi，在上图中的Size设置时注意与要生成视频的图片保持相同。
-
-要更改渲染的模型，可以在test_trackers2.cpp的obj_path变量处修改，如果要得到下图的效果，在上述修改modelFile和videoFile的基础上，将obj_path设置为解压后的flower/test.obj所在路径。
-
-生成视频的效果如下图所示，其中花为渲染合成到原始图像的模型，你可以通过选择自己的测试视频、被跟踪模型、被渲染模型实现更高级的AR效果
+生成视频的效果如下图所示，其中花为渲染合成到原始图像的模型，你可以通过选择自己的测试视频、被跟踪模型、被渲染模型实现更高级的AR效果。
 
 ![](readme_images/image-20230707095219981.png)
 
-**Attention:如果使用其他的模型没法得到预想的效果，可能是因为待跟踪物体模型和渲染合成模型之间的坐标系存在较大差异，可以使用meshlab进行调整（或者写一段读取obj文件直接修改的代码），如果使用meshlab，打开一个obj文件：**
+### 其他说明
+
+#### Meshlab可视化调整模型
+
+如果使用其他的模型没法得到预想的效果，可能是因为待跟踪物体模型和渲染合成模型之间的坐标系存在较大差异，可以使用meshlab进行调整（或者写一段读取obj文件直接修改的代码），如果使用meshlab，打开一个obj文件：
 
 ![image-20220710171928213](readme_images/image-20220710171928213.png)
 
-**在下图所示菜单选项中的Transform项可以缩放、平移、旋转模型**
+在下图所示菜单选项中的Transform项可以缩放、平移、旋转模型
 
 ![image-20220710172115765](readme_images/image-20220710172115765.png)
 
-# 渲染代码说明
+#### 视频导出
 
-渲染代码主体来自[learnOpenGL](https://learnopengl-cn.github.io/)，各函数功能可参考该教程
+如果需要将渲染后的视频导出，可以搜索VideoWriter的使用方法，代码中也有一定的注释说明
+
+![image-20230711174409574](D:\projects\boxar_fork\BoxAR\README\image-20230711174409574.png)
 
 # 扩展方向
 

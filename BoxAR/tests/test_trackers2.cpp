@@ -73,8 +73,9 @@ void test_ardetectors()
 	*	参数4：输出视频的分辨率，该项注意应该与要保存为视频的连续图片大小相同
 	*/
 	int fourcc = CV_FOURCC('M', 'P', '4', '2');
-	//VideoWriter writer3("output.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,720), true);
-
+	//int fourcc = CV_FOURCC('D','I','V','X');
+	//VideoWriter writer("output.avi", fourcc, cap.get(CAP_PROP_FPS), Size(cap.get(CAP_PROP_FRAME_WIDTH),cap.get(CAP_PROP_FRAME_HEIGHT)), true);
+	//VideoWriter writer("output.mp4", fourcc, cap.get(CAP_PROP_FPS), Size(cap.get(CAP_PROP_FRAME_WIDTH),cap.get(CAP_PROP_FRAME_HEIGHT)), true);
 	/*********************************变换矩阵类声明************************************
 	* CVRMats是CVF提供的变换矩阵集合类，包含模型矩阵、投影矩阵、视图矩阵
 	* 具体三种矩阵的作用：https://zhuanlan.zhihu.com/p/386204250
@@ -147,6 +148,7 @@ void test_ardetectors()
 			// rr.img获取渲染的RGB图像并显示
 			cv::imshow("test", rr.img);
 			cv::waitKey(1);
+			//writer << rr.img;
 			/*
 			* 所以要自主设计AR场景，需要做的是：
 			* 1.构思一个合理的场景，包括被跟踪物体和需要叠加的虚拟模型
@@ -154,9 +156,11 @@ void test_ardetectors()
 			*	p.s. 模型一定是表面特征明显的
 			* 3.由于虚拟物体的叠加是在被跟踪物体的基础上，因此需要预先设置好虚拟物体和被跟踪物体在同一坐标系下的相对关系
 			*/
+
 		}
 		++fi;
 	}
+	//writer.release();
 }
 	
 CMD_BEG()
