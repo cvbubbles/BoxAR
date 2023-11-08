@@ -287,7 +287,7 @@ public:
 
 		fd.objs.clear();
 
-		//#pragma omp parallel num_threads(nThreads)
+		//#pragma omp parallel /*num_threads(nThreads)*/
 		for (int i = 0; i < (int)_models.size(); ++i)
 		{
 			auto& obj = _models[i];

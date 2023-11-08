@@ -104,7 +104,9 @@ public:
 	
 	bool isTracked() const
 	{
-		return pose.score > 1e-3f;
+		//return pose.score > 1e-3f;
+		
+		return pose.score > 0.5f;
 	}
 	void get(re3d::ImageObject& o)
 	{
@@ -138,11 +140,20 @@ private:
 	std::deque<Frame>                 _frames;
 	ff::Thread                        _bgThread;
 	Frame* _detectedFrame=nullptr;
+	bool   _detectInMainThread = false;
 public:
 	virtual void init(ModelSet* modelSet, ArgSet* args)
 	{
-		_detector = re3d::FrameProc::create("v1.Detector");
+		std::string detectorName = "v1.Detector";
+		if (args)
+			detectorName=args->getd<std::string>("detector", detectorName);
+		
+		_detector = re3d::FrameProc::create(detectorName.c_str());
 		_detector->init(modelSet, args);
+
+		if (detectorName == "v1.ManualInitor")
+			_detectInMainThread = true;
+	
 		_modelSet = modelSet;
 		{
 			std::vector<DModel> models(modelSet->size());
@@ -159,43 +170,50 @@ public:
 		}
 		_frames.clear();
 	}
-	void _detect(Frame &frame, Matx33f K)
+	void _detect(Frame &frame, std::shared_ptr<FrameData> _fd)
 	{
-		FrameData fd;
-		fd.cameraK = K;
+		FrameData &fd(*_fd);
 		
 		_detector->pro(frame.img, fd);
-
 		frame.poseDetected.clear();
-		for (auto& v : fd.objs)
+		if (!fd.objs.empty())
 		{
-			auto pose=v.pose.get<std::vector<RigidPose>>();
-			if (!pose.empty())
+			for (auto& v : fd.objs)
 			{
-				DPose t;
-				t.imodel = v.modelIndex;
-				t.pose = pose.front();
-				frame.poseDetected.push_back(t);
+				auto pose = v.pose.get<std::vector<RigidPose>>();
+				if (!pose.empty())
+				{
+					DPose t;
+					t.imodel = v.modelIndex;
+					t.pose = pose.front();
+					frame.poseDetected.push_back(t);
+				}
 			}
+			_detectedFrame = &frame;
 		}
-		_detectedFrame = &frame;
 	}
-	void _detectedToCurFrame(Frame &cur, const Matx33f &K, PoseScore &poseScore)
+	void _detectedToCurFrame(Frame &cur, std::shared_ptr<FrameData> _fd, PoseScore &poseScore)
 	{
 		if (_detectedFrame)
 		{
-			cur.poseDetected.clear();
-
-			for (auto& obj : _detectedFrame->poseDetected)
+			//if (_detectedFrame != &cur)
 			{
-				int imodel = obj.imodel;
-				RigidPose tarPose;
-				_models[imodel].baseTracker.track(_detectedFrame->img,obj.pose,cur.img, tarPose, K);
-				DPose t;
-				t.imodel = imodel;
-				t.pose = tarPose;
-				t.pose.score = poseScore.getScore(&_models[imodel].baseTracker, tarPose, K);
-				cur.poseDetected.push_back(t);
+				auto K = _fd->cameraK;
+
+				std::vector<DPose> curPose;
+
+				for (auto& obj : _detectedFrame->poseDetected)
+				{
+					int imodel = obj.imodel;
+					RigidPose tarPose;
+					_models[imodel].baseTracker.track(_detectedFrame->img, obj.pose, cur.img, tarPose, K);
+					DPose t;
+					t.imodel = imodel;
+					t.pose = tarPose;
+					t.pose.score = poseScore.getScore(&_models[imodel].baseTracker, tarPose, K);
+					curPose.push_back(t);
+				}
+				cur.poseDetected.swap(curPose);
 			}
 			_detectedFrame->locked = false;
 			_detectedFrame = nullptr;
@@ -220,20 +238,35 @@ public:
 		bool waitBg = false;
 		PoseScore poseScore(img);
 
-		if (_bgThread.isIdle())
+		if (!_detectInMainThread)
 		{
-			if (!_detectedFrame)
+			if (_bgThread.isIdle())
 			{
-				cur.locked = true;
-				_bgThread.post([this, &fd, &cur]() {
-					this->_detect(cur, fd.cameraK);
-					});
+				std::shared_ptr<FrameData> _fd(new FrameData(fd));
+				if (!_detectedFrame)
+				{
+					cur.locked = true;
+					_bgThread.post([this, _fd, &cur]() {
+						this->_detect(cur, _fd);
+						});
+				}
+
+				if (_detectedFrame)
+				{
+					_bgThread.post([this, &cur, _fd, &poseScore]() {
+						this->_detectedToCurFrame(cur, _fd, poseScore);
+						});
+					waitBg = true;
+				}
 			}
-			else
+		}
+		else
+		{
+			std::shared_ptr<FrameData> _fd(new FrameData(fd));
+			this->_detect(cur, _fd);
+			if (_detectedFrame)
 			{
-				_bgThread.post([this, &cur, &fd, &poseScore]() {
-					this->_detectedToCurFrame(cur, fd.cameraK, poseScore);
-					});
+				this->_detectedToCurFrame(cur, _fd, poseScore);
 				waitBg = true;
 			}
 		}
@@ -244,6 +277,7 @@ public:
 		{
 			auto& prev = _frames[_frames.size() - 2];
 			
+			//#pragma omp parallel num_threads(2)
 			for (int i = 0; i < (int)prev.poseTracked.size(); ++i)
 			{
 				//int imodel = prev.poseTracked[i].imodel;
