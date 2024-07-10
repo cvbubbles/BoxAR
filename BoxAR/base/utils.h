@@ -117,7 +117,7 @@ class VideoWriterEx
 	double _fps;
 	int   _state;
 public:
-	void set(const std::string &file, double fps, int fourcc = CV_FOURCC('M', 'J', 'P', 'G'));
+	void set(const std::string &file, double fps, int fourcc = cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
 	
 	bool writeEx(const Mat &img, int waitCode);
 
