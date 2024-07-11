@@ -5,15 +5,11 @@ _STATIC_BEG
 
 void test_detectors()
 {
-	app()->setTempDir("e:/boxar/");
+	app()->setTempDir("E:\\ZJR\\summer\\new\\new");
 
-	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/");
-
-	//std::string modelFile = R"(.\scan\3ds-model\bottle2\bottle2.ply)", videoFile = R"(.\BoxAR\video\bottle2-5.avi)";
-	//std::string modelFile = R"(.\scan\3ds-model\bottle3\bottle3.ply)", videoFile = R"(.\test\bottle3.mp4)";
-	//std::string modelFile = R"(.\test\3d\box1.3ds)", videoFile = R"(.\test\box1.mp4)";
-	//std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
-	std::string modelFile = R"(.\test\3d\car.3ds)", videoFile = R"(.\test\car.mp4)";
+	ff::setCurrentDirectory("E:\\ZJR\\summer\\new\\new");
+	//std::string modelFile = "E:\\ZJR\\summer\\new\\qinghuaci\\obj\\qinghuaci.obj", videoFile = "E:\\ZJR\\summer\\new\\qinghuaci\\test2.mp4";
+	std::string modelFile = "E:\\ZJR\\summer\\new\\model\\box\\mesh.obj", videoFile = "E:\\ZJR\\summer\\BoxAR\\BoxAR\\video\\test1_video\\test1_1.mp4";
 	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
 
 	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";

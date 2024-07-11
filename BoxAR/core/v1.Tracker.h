@@ -1,3 +1,7 @@
+//#pragma once
+//
+//#include"v1.BaseTracker1.h"
+//#include"BFC/thread.h"
 #pragma once
 
 #include"v1.BaseTracker1.h"
@@ -12,7 +16,7 @@ typedef BaseTracker1  BaseTracker;
 
 class PoseScore
 {
-	enum{N_LAYERS=2};
+	enum { N_LAYERS = 2 };
 
 	Mat2f         _grad;
 public:
@@ -40,14 +44,14 @@ public:
 			if (l != N_LAYERS - 1)
 				gray = imscale(gray, 0.5);
 		}
-		_grad=cv::mergeChannels(dx, dy);
+		_grad = cv::mergeChannels(dx, dy);
 	}
-	float getScore(BaseTracker *baseTracker, const RigidPose& pose, const Matx33f &K, float dotT=0.9f)
+	float getScore(BaseTracker* baseTracker, const RigidPose& pose, const Matx33f& K, float dotT = 0.9f)
 	{
 		std::vector<Point2f>  points, normals;
 		baseTracker->getProjectedContours(K, pose, points, &normals);
 
-		float wsum = 1e-6, score=0;
+		float wsum = 1e-6, score = 0;
 		int   nmatch = 0;
 		for (size_t i = 0; i < points.size(); ++i)
 		{
@@ -96,17 +100,15 @@ public:
 class DPose
 {
 public:
-	int        imodel=-1;
+	int        imodel = -1;
 	RigidPose  pose;
 	//float      score;
 	Vec6f      vpose, svpose;
 public:
-	
+
 	bool isTracked() const
 	{
-		//return pose.score > 1e-3f;
-		
-		return pose.score > 0.5f;
+		return pose.score > 1e-3f;
 	}
 	void get(re3d::ImageObject& o)
 	{
@@ -126,7 +128,7 @@ public:
 	Mat					 img;
 	std::vector<DPose>   poseTracked;
 	std::vector<DPose>   poseDetected;
-	bool        locked=false;
+	bool        locked = false;
 };
 
 class Tracker
@@ -139,21 +141,12 @@ private:
 	std::vector<DModel>               _models;
 	std::deque<Frame>                 _frames;
 	ff::Thread                        _bgThread;
-	Frame* _detectedFrame=nullptr;
-	bool   _detectInMainThread = false;
+	Frame* _detectedFrame = nullptr;
 public:
 	virtual void init(ModelSet* modelSet, ArgSet* args)
 	{
-		std::string detectorName = "v1.Detector";
-		if (args)
-			detectorName=args->getd<std::string>("detector", detectorName);
-		
-		_detector = re3d::FrameProc::create(detectorName.c_str());
+		_detector = re3d::FrameProc::create("v1.Detector");
 		_detector->init(modelSet, args);
-
-		if (detectorName == "v1.ManualInitor")
-			_detectInMainThread = true;
-	
 		_modelSet = modelSet;
 		{
 			std::vector<DModel> models(modelSet->size());
@@ -170,50 +163,42 @@ public:
 		}
 		_frames.clear();
 	}
-	void _detect(Frame &frame, std::shared_ptr<FrameData> _fd)
+	void _detect(Frame& frame, Matx33f K)
 	{
-		FrameData &fd(*_fd);
-		
+		FrameData fd;
+		fd.cameraK = K;
+
 		_detector->pro(frame.img, fd);
 		frame.poseDetected.clear();
-		if (!fd.objs.empty())
+		for (auto& v : fd.objs)
 		{
-			for (auto& v : fd.objs)
+			auto pose = v.pose.get<std::vector<RigidPose>>();
+			if (!pose.empty())
 			{
-				auto pose = v.pose.get<std::vector<RigidPose>>();
-				if (!pose.empty())
-				{
-					DPose t;
-					t.imodel = v.modelIndex;
-					t.pose = pose.front();
-					frame.poseDetected.push_back(t);
-				}
+				DPose t;
+				t.imodel = v.modelIndex;
+				t.pose = pose.front();
+				frame.poseDetected.push_back(t);
 			}
-			_detectedFrame = &frame;
 		}
+		_detectedFrame = &frame;
 	}
-	void _detectedToCurFrame(Frame &cur, std::shared_ptr<FrameData> _fd, PoseScore &poseScore)
+	void _detectedToCurFrame(Frame& cur, const Matx33f& K, PoseScore& poseScore)
 	{
 		if (_detectedFrame)
 		{
-			//if (_detectedFrame != &cur)
+			cur.poseDetected.clear();
+
+			for (auto& obj : _detectedFrame->poseDetected)
 			{
-				auto K = _fd->cameraK;
-
-				std::vector<DPose> curPose;
-
-				for (auto& obj : _detectedFrame->poseDetected)
-				{
-					int imodel = obj.imodel;
-					RigidPose tarPose;
-					_models[imodel].baseTracker.track(_detectedFrame->img, obj.pose, cur.img, tarPose, K);
-					DPose t;
-					t.imodel = imodel;
-					t.pose = tarPose;
-					t.pose.score = poseScore.getScore(&_models[imodel].baseTracker, tarPose, K);
-					curPose.push_back(t);
-				}
-				cur.poseDetected.swap(curPose);
+				int imodel = obj.imodel;
+				RigidPose tarPose;
+				_models[imodel].baseTracker.track(_detectedFrame->img, obj.pose, cur.img, tarPose, K);
+				DPose t;
+				t.imodel = imodel;
+				t.pose = tarPose;
+				t.pose.score = poseScore.getScore(&_models[imodel].baseTracker, tarPose, K);
+				cur.poseDetected.push_back(t);
 			}
 			_detectedFrame->locked = false;
 			_detectedFrame = nullptr;
@@ -226,9 +211,10 @@ public:
 
 		return fd.objs.size();
 	}
-	
+
 	virtual int pro(const Mat& img, FrameData& fd, ff::ArgSet* args)
 	{
+		//cout << "tracker pro" << endl;
 		_frames.push_back(Frame());
 		auto& cur = _frames.back();
 		cur.img = img.clone();
@@ -238,46 +224,32 @@ public:
 		bool waitBg = false;
 		PoseScore poseScore(img);
 
-		if (!_detectInMainThread)
+		if (_bgThread.isIdle())
 		{
-			if (_bgThread.isIdle())
+			if (!_detectedFrame)
 			{
-				std::shared_ptr<FrameData> _fd(new FrameData(fd));
-				if (!_detectedFrame)
-				{
-					cur.locked = true;
-					_bgThread.post([this, _fd, &cur]() {
-						this->_detect(cur, _fd);
-						});
-				}
+				cur.locked = true;
+				//std::cout << "test _detect branchbbranch" << std::endl;
+				_bgThread.post([this, &fd, &cur]() {
 
-				if (_detectedFrame)
-				{
-					_bgThread.post([this, &cur, _fd, &poseScore]() {
-						this->_detectedToCurFrame(cur, _fd, poseScore);
-						});
-					waitBg = true;
-				}
+					this->_detect(cur, fd.cameraK);
+					});
 			}
-		}
-		else
-		{
-			std::shared_ptr<FrameData> _fd(new FrameData(fd));
-			this->_detect(cur, _fd);
-			if (_detectedFrame)
+			else
 			{
-				this->_detectedToCurFrame(cur, _fd, poseScore);
+				_bgThread.post([this, &cur, &fd, &poseScore]() {
+					this->_detectedToCurFrame(cur, fd.cameraK, poseScore);
+					});
 				waitBg = true;
 			}
 		}
 
 		cur.poseTracked.resize(_models.size());
 
-		if (_frames.size()>1)
+		if (_frames.size() > 1)
 		{
 			auto& prev = _frames[_frames.size() - 2];
-			
-			//#pragma omp parallel num_threads(2)
+
 			for (int i = 0; i < (int)prev.poseTracked.size(); ++i)
 			{
 				//int imodel = prev.poseTracked[i].imodel;
@@ -292,7 +264,7 @@ public:
 					t.imodel = i;
 					t.pose = pose;
 
-					cur.poseTracked[i]=t;
+					cur.poseTracked[i] = t;
 				}
 			}
 		}
@@ -302,8 +274,8 @@ public:
 			for (auto& d : cur.poseDetected)
 			{
 				DPose* t = &cur.poseTracked[d.imodel];
-				
-				if (t->pose.score+0.05 < d.pose.score)
+
+				if (t->pose.score + 0.05 < d.pose.score)
 				{
 					*t = d;
 
@@ -312,7 +284,7 @@ public:
 			}
 		}
 
-		if(false)
+		if (false)
 		{
 			int nf = (int)_frames.size();
 
@@ -323,14 +295,14 @@ public:
 				auto isTracked = [this, nf, i](int fi) {
 					return this->_frames[fi].poseTracked[i].isTracked();
 				};
-				auto fpose = [this, i](int fi) -> DPose&{
+				auto fpose = [this, i](int fi) -> DPose& {
 					return this->_frames[fi].poseTracked[i];
 				};
 				if (nf >= 4 && isTracked(nf - 1) && isTracked(nf - 2) && isTracked(nf - 3) & isTracked(nf - 4))
 				{
 					auto svpose2 = 0.25f * fpose(nf - 4).vpose + 0.5f * fpose(nf - 3).vpose + 0.25f * fpose(nf - 2).vpose;
-					auto svpose1 = 0.25f * fpose(nf-3).vpose + 0.5f * fpose(nf-2).vpose + 0.25f * fpose(nf-1).vpose;
-					fpose(nf-1).svpose = svpose1*2.f - svpose2;
+					auto svpose1 = 0.25f * fpose(nf - 3).vpose + 0.5f * fpose(nf - 2).vpose + 0.25f * fpose(nf - 1).vpose;
+					fpose(nf - 1).svpose = svpose1 * 2.f - svpose2;
 				}
 			}
 		}
