@@ -68,8 +68,8 @@ void test_aruco_ar()
 
 		auto param = aruco::DetectorParameters::create();
 		//param->cornerRefinementMethod = aruco::CORNER_REFINE_CONTOUR;
+		//param->adaptiveThreshWinSizeMin = 7;
 		
-
 		time_t beg = clock();
 		std::vector<int> ids;
 		std::vector<std::vector<cv::Point2f>> corners;

@@ -51,6 +51,9 @@
     <ClCompile Include="core\coreobjs.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="tests\test_aruco.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\base.h">
@@ -84,6 +87,9 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="core\v1.BaseTracker1.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\v1.ManualInitor.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
