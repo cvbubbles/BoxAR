@@ -51,15 +51,16 @@ void test_aruco_ar()
 
 	std::string modelDir = R"(D:/ARsystem/test/3d/)";
 	
-	float markerSize = 0.1f;
-	float objectSize = 0.05f;
+	float markerSize = 0.1f; //marker的实际尺寸，单位米
+	float objectSize = 0.05f; //物体的大小，单位米
 
 	CVRModel model0(modelDir + "cat.obj");
-	auto initT0 = model0.getUnitize()*cvrm::scale(objectSize);
+	auto initT0 = model0.getUnitize()*cvrm::scale(objectSize); //getUnitize将获得一个变换：把物体中心平移到原点，并把大小归一化为1
 
 	CVRModel model1(modelDir + "bunny.3ds");
 	auto initT1 = model1.getUnitize() * cvrm::rotate(CV_PI/2, Vec3f(1.f,0.f,0.f)) * cvrm::scale(objectSize);
 
+	//获取投影变换，100、0.1分别是OpenGL中的远、近裁剪面
 	auto mProjection= cvrm::fromK(cameraMatrix, image.size(), 0.1, 100);
 
 	while (inputVideo.read(image) )
@@ -68,29 +69,28 @@ void test_aruco_ar()
 
 		auto param = aruco::DetectorParameters::create();
 		//param->cornerRefinementMethod = aruco::CORNER_REFINE_CONTOUR;
+		//param->adaptiveThreshWinSizeMin = 7;
 		
-
 		time_t beg = clock();
 		std::vector<int> ids;
 		std::vector<std::vector<cv::Point2f>> corners;
-		cv::aruco::detectMarkers(image, dictionary, corners, ids, param);
+		cv::aruco::detectMarkers(image, dictionary, corners, ids, param); //检测markers
 
 		// if at least one marker detected
 		if (ids.size() > 0) 
 		{
-			cv::aruco::drawDetectedMarkers(image, corners, ids);
+			//cv::aruco::drawDetectedMarkers(image, corners, ids);
 			std::vector<cv::Vec3d> rvecs, tvecs;
-			cv::aruco::estimatePoseSingleMarkers(corners, 0.1, cameraMatrix, Mat(), rvecs, tvecs);
+			cv::aruco::estimatePoseSingleMarkers(corners, markerSize, cameraMatrix, Mat(), rvecs, tvecs); //估计markers和相机的相对位姿
 
-			CVRModelArray modelArray(ids.size());
+			CVRModelArray modelArray(ids.size()); //包含多个模型的场景
 			
-			// draw axis for each marker
 			for (int i = 0; i < ids.size(); i++)
 			{
 				int id = ids[i];
-				modelArray[i].model = id%2==0? model0 : model1;
-				modelArray[i].mModeli = id%2==0? initT0 : initT1;
-				modelArray[i].mModel = cvrm::fromRT(rvecs[i], tvecs[i]);
+				modelArray[i].model = id%2==0? model0 : model1;   //根据id设置模型
+				modelArray[i].mModeli = id%2==0? initT0 : initT1;  //设置对应模型的初始变换
+				modelArray[i].mModel = cvrm::fromRT(rvecs[i], tvecs[i]); //应用当前R, t
 			}
 			
 			CVRMats mats;
@@ -99,7 +99,7 @@ void test_aruco_ar()
 			CVRender render(modelArray);
 
 			render.setBgImage(image);
-			auto rr=render.exec(mats, image.size());
+			auto rr=render.exec(mats, image.size(), CVRM_IMAGE /*| CVRM_DEPTH*/, CVRM_DEFAULT); //可以选择是否输出深度图
 			image = rr.img;
 		}
 

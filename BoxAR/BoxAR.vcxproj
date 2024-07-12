@@ -82,8 +82,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\glad\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\glfw-3.3.4.bin.WIN64\lib-vc2019;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)../glad\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)../glfw-3.3.4.bin.WIN64\lib-vc2019;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnabled>false</VcpkgEnabled>
@@ -137,13 +137,15 @@
       <PreprocessorDefinitions>CVRENDER_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>./;../;../include/;$(D_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(D_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -171,6 +173,7 @@
     <ClInclude Include="core\v1.BaseTracker1.h" />
     <ClInclude Include="core\v1.DetectorModelData.h" />
     <ClInclude Include="core\v1.Detector.h" />
+    <ClInclude Include="core\v1.ManualInitor.h" />
     <ClInclude Include="core\v1.Tracker.h" />
     <ClInclude Include="core\vxbase.h" />
     <ClInclude Include="cmdstd.h" />

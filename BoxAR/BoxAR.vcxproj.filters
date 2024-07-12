@@ -23,7 +23,7 @@
       <UniqueIdentifier>{770c08b1-91a7-4505-bee9-32778e765657}</UniqueIdentifier>
     </Filter>
     <Filter Include="glrender">
-      <UniqueIdentifier>{a5ae4456-f6d7-4d9c-928c-0b6ce1f584cb}</UniqueIdentifier>
+      <UniqueIdentifier>{b0dad4c5-fa22-49ff-9d23-950687d0fe25}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -60,11 +60,11 @@
     <ClCompile Include="tests\test_trackers2.cpp">
       <Filter>tests</Filter>
     </ClCompile>
-    <ClCompile Include="glad.c">
-      <Filter>glrender</Filter>
-    </ClCompile>
     <ClCompile Include="tools\calibration.cpp">
       <Filter>tools</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>glrender</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -99,6 +99,9 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="core\v1.BaseTracker1.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\v1.ManualInitor.h">
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="glrender\backdrawer.h">
