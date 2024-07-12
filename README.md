@@ -11,7 +11,7 @@
 
 **2.BoxAR代码下载**
 
-使用git clone命令或者下载zip文件将代码从仓库复制到本地
+使用git clone命令并切换到**ar2024分支**
 
 **3、文件组织结构**
 
@@ -43,7 +43,7 @@ Path/
 
 - data中给出了我们的一些模型数据
 
-   -我们会在各个章节指出我们使用了哪些文件
+   将data中的数据解压至此
 
 - glad和glfw是方便同学们扩展而使用的opengl库
 
@@ -55,6 +55,19 @@ Path/
 
 ![image-20230711171945223](readme_images\image-20230711171945223.png)
 
+
+
+打开local.h
+
+修改一下路径
+
+```
+#define TMPDIR    std::string(" /path/to/output/")
+#define INPUTDIR  std::string("/path/to/data")
+```
+
+第一个目录是输出缓存文件位置，第二个设置为代码文件所在目录
+
 **请不要随便修改local.props之外的项目配置**
 
 **5、构建项目**
@@ -63,7 +76,7 @@ Path/
 
 在release x64模式下生成项目，成功后你将在BoxAR.sln 同级目录下看到一个x64文件夹
 
-![联想截图_20240712112346](D:\ARsystem\BoxAR\readme_images\联想截图_20240712112346.png)
+![联想截图_20240712112346](.\readme_images\联想截图_20240712112346.png)
 
 最后，在项目属性设置里设置PATH=$(D_PATH)，示例：
 
@@ -82,7 +95,7 @@ Path/
 
 **跟踪和渲染**
 
-- `exec("test_detectors");`测试跟踪算法
+- `exec("test_3d_tracking");`测试跟踪算法
 - `exec("test_ardetectors");`测试AR效果
 
 **无纹理物体的跟踪**
@@ -132,26 +145,19 @@ CMD_END()
 
 ## 2.1 跟踪一个物体
 
-在main.cpp中选择`exec("test_detectors")`执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。
+在main.cpp中选择`exec("test_3d_tracking")`执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。
 
-通过更改下图所示路径，第一个目录是输出缓存文件位置，第二个设置为代码文件所在目录：
-![image-20220707103242347](readme_images/image-20220707103242347.png)
+在test_tracker.cpp中的test_detectors()函数中更改`modelFile`和`videoFile`变量可以选择待跟踪物体模型和测试视频。如果你无法正确加载模型，我们建议采用绝对路径方式试试看。
 
-在test_tracker.cpp中的test_detectors()函数中更改`modelFile`和`videoFile`变量可以选择待跟踪物体模型和测试视频。我们建议采用绝对路径方式避免出错。
-
-![image-20240712114617401](D:\ARsystem\BoxAR\readme_images\image-20240712114617401.png)
+![image-20240712114617401](\readme_images\image-20240712114617401.png)
 
 
 
 ## 2,2 无纹理物体跟踪
 
-该章节使用到一些无纹理的3d物体和视频存放在data/test.zip中。
-
 在main.cpp中选择`exec("test_detectors")`执行，跟踪算法的测试函数在`exec("test_manual_init");`中
 
-
-
-![image-20240712155543792](C:\Users\DELL\AppData\Roaming\Typora\typora-user-images\image-20240712155543792.png)
+![image-20240712155543792](readme_images\image-20240712155543792.png)
 
 ## 2.3 AR渲染
 
@@ -174,13 +180,11 @@ CMD_END()
 
 [aruco是什么？](https://blog.csdn.net/dgut_guangdian/article/details/107814300)
 
+exec("test_create_aruco_dict") 生成了纸面上的aruco 我们跟踪这些码，然后在上面渲染了一些物体如下所示。
 
+exec("test_aruco_ar")可以执行。
 
-
-
-
-
-![image-20240712150255176](D:\ARsystem\BoxAR\readme_images\image-20240712150255176.png)
+![image-20240712150255176](readme_images\image-20240712150255176.png)
 
 # 第四章 制作模型
 
@@ -200,18 +204,20 @@ CMD_END()
 
 2.创建目录
 
-![image-20220706164710048](readme_images/image-20220706164710048.png)
-
-如上图，在BoxAR目录下创建两个文件夹
+如上图，在INPUTDIR目录下创建两个文件夹
 
 - images 用来存放图片
 - model 用来存放模型文件
 
 ### 4.1.2 模型放置与图片拍摄
 
-测量模型的长宽高 单位： 毫米(mm)
+首先你需要在现实中找到一个长方体盒子
 
-将你要制作的长方体模型在右手空间坐标系下按照长边贴近的原则摆放
+**将你要制作的长方体模型在右手空间坐标系下按照长边贴近的原则摆放**，
+
+这样y轴方向是长 x轴方向是宽 z轴方向是高
+
+**记录你的模型的长宽高 单位： 毫米(mm)**
 
 ![image-20220706164745823](readme_images/image-20220706164745823.png)
 
@@ -227,7 +233,7 @@ CMD_END()
 
 1. 依次按照提示输入长、宽、高（mm）
 
-2. 按照顺时针方向依次对六张图片选定模型的四个点，然后点击回车键进入下一张图片选择。如下图
+2. 按照顺时针方向依次对六张图片选定模型的四个点，然后点击**回车**键预览切片效果，再次**回车**进入下一张图片选择。如下图
 
    ![image-20220706164915776](readme_images/image-20220706164915776.png)
 
@@ -298,9 +304,36 @@ CMD_END()
 
 
 
+接下来依次将你获得的data 替换掉下图对应追踪部分代码的dk[]  并将cameraK替换成注释代码即可。
+
+```
+
+float dK[] = {
+		1.324595302424838110e+03, 0.000000000000000000e+00, 6.460060955956646467e+02,
+		0.000000000000000000e+00, 1.330463970754883576e+03, 3.568279021773695945e+02,
+		0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00
+	};
+	
+fd.cameraK = cvrm::defaultK(img.size(), 1.5);
+//memcpy(fd.cameraK.val, dK, sizeof(dK));
+```
 
 
 
+# 第五章 扩展方向
+
+仓库里的代码仅仅实现了一个非常简单的demo生成。
+
+我们希望你能根据我们给出的示例程序制作更加酷炫的AR场景。
+
+具体的，我们希望你能像第一章中写一个新函数，在我们给出的代码基础上做出一些改进
+
+可改进的方向包括但不限于：
+
+- 发挥想象，设计更高级的AR场景  例如切换一些跟踪物体的皮肤
+- 交互  例如鼠标单击 做出某些反应
+- 跟换实时性更好的跟踪算法
+- ……
 
 
 
@@ -320,15 +353,6 @@ CMD_END()
 
 如果需要将渲染后的视频导出，可以搜索VideoWriter的使用方法，代码中也有一定的注释说明
 
-# 第五章 扩展方向
-
-仓库里的代码仅仅实现了一个非常简单的demo生成，要实现更高级的AR效果，可改进的方向包括但不限于：
-
-- 发挥想象，设计更高级的AR场景
-- 交互
-- 跟换实时性更好的跟踪算法
-- ……
-
 # FAQ
 
 1、如何使用wifi？
@@ -345,7 +369,7 @@ CMD_END()
 
 在项目属性->链接器->常规->附加依赖项中把cvfx中对应lib文件的路径添加进去
 
-4、运行过程中，如果出现filesystem异常的情况，则对应修改test_trackers.cpp或test_trackers2.cpp中的modelFile和videoFile变量
+4、运行过程中，如果出现filesystem异常的情况，则对应修改modelFile和videoFile变量
 
 5、配置过程中如果遇到“pop_t：未声明的标识符”，可以参照[链接](https://blog.csdn.net/DLW__/article/details/122329784)修改
 

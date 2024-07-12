@@ -7,14 +7,14 @@ void test_ardetectors()
 {
 	//app()->setTempDir("D:/projects/boxar");
 
-	app()->setTempDir("D:/projects/boxar");
+	app()->setTempDir(TMPDIR);
 
-	ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR");
+	ff::setCurrentDirectory(INPUTDIR);
 
 	//ff::setCurrentDirectory("E:\\ZJR\\summer\\new\\new");
 
 	//std::string modelFile = "E:\\ZJR\\summer\\BoxAR-ar\\BoxAR\\model\\mesh.obj", videoFile = "E:\\ZJR\\summer\\BoxAR\\BoxAR\\video\\test1_video\\test1_1.mp4";
-	std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
+	std::string modelFile = "./BoxAR/model/test1/mesh.obj", videoFile = "./BoxAR/video/test1_video/test1_1.mp4";
 	//string obj_path = "E:\\ZJR\\summer\\flower\\test.obj";
 
 	//config model-set
@@ -52,14 +52,14 @@ void test_ardetectors()
 	int frameCount = 0;
 	Mat img;
 	int fourcc = CV_FOURCC('M', 'P', '4', '2');
-	VideoWriter writer("output1000_phong.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
+	VideoWriter writer(R"(output1000_phong.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
 		720), true);
-	VideoWriter writer2("output1000_input.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
+	VideoWriter writer2(R"(output1000_input.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
 		720), true);
-	VideoWriter writer3("output1000_tracker.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
+	VideoWriter writer3(R"(output1000_tracker.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
 		720), true);
-	string obj_path = "D:\\ARsystem\\flower\\flower\\test.obj";;
-
+	//string obj_path = R"(./flower/flower/test.obj)";
+	string obj_path = "D:/ARsystem/data/flower/flower/test.obj";
 
 	cv::Matx44f mProjection;
 	cv::Matx44f mView;
@@ -101,8 +101,8 @@ void test_ardetectors()
 
 	// build and compile shaders
 	// -------------------------
-	Shader testShader("./glrender/vertex.glsl", "./glrender/frag.glsl");
-
+	//Shader testShader("./glrender/vertex.glsl", "./glrender/frag.glsl");
+	Shader testShader("D:/ARsystem/BoxAR/BoxAR/glrender/vertex.glsl", "D:/ARsystem/BoxAR/BoxAR/glrender/frag.glsl");
 	MModel mModel(obj_path);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

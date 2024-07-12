@@ -135,7 +135,7 @@ void mouseHandler(int event, int x, int y, int flags, void* data_ptr)
 
 void gen_box_model()
 {
-
+	ff::setCurrentDirectory(INPUTDIR);
 	string img_dir = "./images/";
 	string model_dir = "./model/";
 	string name = "mesh";

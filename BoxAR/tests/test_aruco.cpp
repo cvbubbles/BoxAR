@@ -7,6 +7,7 @@ _STATIC_BEG
 void test_create_aruco_dict()
 {
 	//cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::generateCustomDictionary(36, 5);
+	ff::setCurrentDirectory(INPUTDIR);
 	cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50);
 
 	//for (int i = 0; i < dict->bytesList.rows; ++i)
@@ -16,7 +17,7 @@ void test_create_aruco_dict()
 		dict->drawMarker(i, 512, img);
 		imshow("marker", img);
 
-		std::string file = cv::format("../data/aruco/%03d.png", i + 1);
+		std::string file = cv::format("./%03d.png", i + 1);
 		imwrite(file, img);
 
 		if ('q' == cv::waitKey(10))
@@ -48,8 +49,9 @@ void test_aruco_ar()
 	cv::Matx33f cameraMatrix=cvrm::defaultK(image.size(),1.5f);
 	/*cv::Matx33f cameraMatrix = { 5.2093072503417386e+02, 0., 3.2627544281606572e+02, 0.,
 	   5.2164480491819393e+02, 2.4303275400142539e+02, 0., 0., 1. };*/
-
-	std::string modelDir = R"(D:/ARsystem/test/3d/)";
+	ff::setCurrentDirectory(INPUTDIR);
+	std::string modelDir = R"(./test/3d/)";
+	//std::string modelDir = R"(D:/ARsystem/test/3d/)";
 	
 	float markerSize = 0.1f; //marker的实际尺寸，单位米
 	float objectSize = 0.05f; //物体的大小，单位米

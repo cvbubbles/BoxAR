@@ -6,15 +6,19 @@ _STATIC_BEG
 void test_3d_tracking()
 {
 	//set path to your output path
-	app()->setTempDir("D:/projects/boxar");   //example
-
+	//app()->setTempDir("D:/projects/boxar");   //example
+	app()->setTempDir(TMPDIR);
 	//set path to your current path
-	ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR"); 
-	//std::string modelFile = R"(./BoxAR/model/test1/mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
-	std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
+	//ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR"); 
+	ff::setCurrentDirectory(INPUTDIR);
+
+
+
+	//std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
+
 	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
 
-	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
+	std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test2\mesh.obj)", videoFile = R"(.\BoxAR\video\test2_video\test2_1.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test3\mesh.obj)", videoFile = R"(.\BoxAR\video\test3_video\test3_1.mp4)";
 
@@ -51,11 +55,7 @@ void test_3d_tracking()
 		0.000000000000000000e+00, 1.330463970754883576e+03, 3.568279021773695945e+02,
 		0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00
 	};
-	/*
-	To do 
 
-
-	*/
 	VideoWriterEx vw;
 	//vw.set("f:/out.mp4", 25);  
 
@@ -106,10 +106,11 @@ CMD_END()
 
 void on_model_select_init_pose()
 {
-	ff::setCurrentDirectory("D:/ARsystem/");
+	ff::setCurrentDirectory(INPUTDIR);
 
-	//std::string file = R"(.\test\3d\car.3ds)";
-	std::string file = R"(.\test\3d\box1.3ds)";
+
+	std::string file = R"(.\test\3d\car.3ds)";
+	//std::string file = R"(.\test\3d\box1.3ds)";
 
 	CVRModel model(file);
 	Size viewSize(640, 480);
@@ -163,9 +164,12 @@ CMD_END()
 
 void test_manual_init()
 {
-	app()->setTempDir("D:/projects/boxar");
+	app()->setTempDir(TMPDIR);
+	//app()->setTempDir("D:/projects/boxar");
+	
+	ff::setCurrentDirectory(INPUTDIR);
+	//ff::setCurrentDirectory("D:/ARsystem/");
 
-	ff::setCurrentDirectory("D:/ARsystem/");
 
 	//std::string modelFile = R"(.\scan\3ds-model\bottle2\bottle2.ply)", videoFile = R"(.\BoxAR\video\bottle2-5.avi)";
 	//std::string modelFile = R"(.\scan\3ds-model\bottle3\bottle3.ply)", videoFile = R"(.\test\bottle3.mp4)";

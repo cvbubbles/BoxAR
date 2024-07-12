@@ -8,6 +8,7 @@ int main()
 	exec("test_3d_tracking");
 	//exec("test_ardetectors");
 
+	// ÎŞÎÆÀí¸ú×ÙºÍäÖÈ¾
 	//exec("model.select_init_pose");
 	//exec("test_manual_init");
 
