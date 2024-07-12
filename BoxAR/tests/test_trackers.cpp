@@ -3,7 +3,7 @@
 
 _STATIC_BEG
 
-void test_detectors()
+void test_3d_tracking()
 {
 	//set path to your output path
 	app()->setTempDir("D:/projects/boxar");   //example
@@ -29,12 +29,13 @@ void test_detectors()
 		models.set(modelInfos);
 	}
 
-	auto detector = FrameProc::create("v1.Tracker");
+	auto tracker = FrameProc::create("v1.Tracker");
 
 	//init detector
 	ff::CommandArgSet args;
-	//args.setArgs("-d2dModelFile f:/sdk/torch_models/model_re3d6_v1.ts -d2dScoreT 0.5");
-	detector->init(&models, &args);
+	args.setArgs("-globalSearch -usePointMatches");
+
+	tracker->init(&models, &args);
 
 	FrameData fd;
 
@@ -77,7 +78,7 @@ void test_detectors()
 		}
 
 		time_t beg = clock();
-		detector->pro(img, fd);
+		tracker->pro(img, fd);
 		printf("\rspeed=%.1ffps       ", 1000.0f/int(clock() - beg));
 
 		//show results
@@ -98,7 +99,7 @@ void test_detectors()
 }
 
 CMD_BEG()
-CMD0("test_detectors", test_detectors)
+CMD0("test_3d_tracking", test_3d_tracking)
 CMD_END()
 
 

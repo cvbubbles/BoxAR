@@ -5,10 +5,10 @@
 int main()
 {
 	//跟踪和渲染
-	//exec("test_detectors");
+	exec("test_3d_tracking");
 	//exec("test_ardetectors");
-	//无纹理物体跟踪
-	exec("model.select_init_pose");
+
+	//exec("model.select_init_pose");
 	//exec("test_manual_init");
 
 	//aruco跟踪和渲染
