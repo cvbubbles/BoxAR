@@ -49,7 +49,7 @@ void test_aruco_ar()
 	/*cv::Matx33f cameraMatrix = { 5.2093072503417386e+02, 0., 3.2627544281606572e+02, 0.,
 	   5.2164480491819393e+02, 2.4303275400142539e+02, 0., 0., 1. };*/
 
-	std::string modelDir = R"(F:\SDUicloudCache\re3d\test\3d\)";
+	std::string modelDir = R"(D:/ARsystem/test/3d/)";
 	
 	float markerSize = 0.1f;
 	float objectSize = 0.05f;

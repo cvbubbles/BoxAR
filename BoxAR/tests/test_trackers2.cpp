@@ -7,13 +7,14 @@ void test_ardetectors()
 {
 	//app()->setTempDir("D:/projects/boxar");
 
-	ff::setCurrentDirectory("D:/projects/boxar/BoxAR/");
-	app()->setTempDir("E:\\ZJR\\summer\\new\\new");
+	app()->setTempDir("D:/projects/boxar");
+
+	ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR");
 
 	//ff::setCurrentDirectory("E:\\ZJR\\summer\\new\\new");
 
 	//std::string modelFile = "E:\\ZJR\\summer\\BoxAR-ar\\BoxAR\\model\\mesh.obj", videoFile = "E:\\ZJR\\summer\\BoxAR\\BoxAR\\video\\test1_video\\test1_1.mp4";
-	std::string modelFile = "E:\\ZJR\\summer\\new\\model\\box\\mesh.obj", videoFile = "E:\\ZJR\\summer\\BoxAR\\BoxAR\\video\\test1_video\\test1_1.mp4";
+	std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
 	//string obj_path = "E:\\ZJR\\summer\\flower\\test.obj";
 
 	//config model-set
@@ -57,7 +58,7 @@ void test_ardetectors()
 		720), true);
 	VideoWriter writer3("output1000_tracker.avi", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
 		720), true);
-	string obj_path = "E:\\ZJR\\summer\\flower\\test.obj";;
+	string obj_path = "D:\\ARsystem\\flower\\flower\\test.obj";;
 
 
 	cv::Matx44f mProjection;
@@ -100,7 +101,7 @@ void test_ardetectors()
 
 	// build and compile shaders
 	// -------------------------
-	Shader testShader("E:\\ZJR\\summer\\new\\new\\BoxAR\\BoxAR\\glrender\\vertex.glsl", "E:\\ZJR\\summer\\new\\new\\BoxAR\\BoxAR\\glrender\\frag.glsl");
+	Shader testShader("./glrender/vertex.glsl", "./glrender/frag.glsl");
 
 	MModel mModel(obj_path);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
