@@ -155,7 +155,7 @@ public:
 			{
 				auto md = _modelSet->getModel(i);
 
-				models[i].baseTracker.loadModel(*md, "");
+				models[i].baseTracker.loadModel(*md, args->getArgStr());
 
 				//models[i].baseTracker2.loadModel(*md, "");
 			}

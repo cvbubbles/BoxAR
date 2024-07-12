@@ -1281,7 +1281,7 @@ public:
 		return curROI;
 	}
 
-	float pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT);
+	float pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT, bool usePointMatches);
 
 	void getProjectedContours(const Matx33f& K, const Pose& pose, std::vector<Point2f>& points, std::vector<Point2f>* normals)
 	{
@@ -1809,7 +1809,7 @@ inline bool isMainThread()
 }
 
 
-inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT)
+inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT, bool usePointMatches)
 {
 	int curView;
 	Rect curROI = this->getCurROI(K, pose, &curView);
@@ -1818,8 +1818,9 @@ inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const 
 	AuxData auxData;
 
 	std::thread t1(
-		[this, &K, &pose, &img, curROI, &dfr, &auxData]() {
-			dfr._pointMatches = this->calcPointMatches(K, pose, img, curROI, curROI.size(), auxData);
+		[this, &K, &pose, &img, curROI, &dfr, &auxData, usePointMatches]() {
+			if(usePointMatches)
+				dfr._pointMatches = this->calcPointMatches(K, pose, img, curROI, curROI.size(), auxData);
 		});
 
 	Rect roi = curROI;
@@ -2205,6 +2206,7 @@ class BaseTracker1
 	ColorHistogram _colorHistogram;
 	bool    _isLocalTracking = false;
 	bool    _useInnerSeg = false;
+	bool    _usePointMatches = true;
 	//DetectorModelData* _detectorModelData;
 
 	struct FrameInfo
@@ -2230,7 +2232,9 @@ public:
 		_obj.loadModel(streamPtr, model, _modelScale);
 
 		ff::CommandArgSet args(argstr);
-		_isLocalTracking = false;// args.getd<bool>("local", false);
+		_isLocalTracking = !args.getd<bool>("globalSearch", false);
+		_usePointMatches = args.getd<bool>("usePointMatches", false);
+
 		_useInnerSeg = true;// args.getd<bool>("useInnserSeg", false);
 		_cur.tracked = false;
 	}
@@ -2296,7 +2300,7 @@ public:
 			errT = _getMedianOfLastN(_frameInfo, 15, [](const FrameInfo& v) {return v.err; });
 		}
 
-		_cur.err = _obj.templ.pro(_cur.img, _K, _cur.pose, _cur.colorProb, thetaT, _isLocalTracking ? FLT_MAX : errT);
+		_cur.err = _obj.templ.pro(_cur.img, _K, _cur.pose, _cur.colorProb, thetaT, _isLocalTracking ? FLT_MAX : errT, _usePointMatches);
 		pose = _descalePose(_cur.pose);
 		return _cur.err;
 	}
@@ -2346,7 +2350,7 @@ public:
 
 		float thetaT = CV_PI / 8, errT = 1.f;
 
-		float err = _obj.templ.pro(tar, K, pose, prob, thetaT, _isLocalTracking ? FLT_MAX : errT);
+		float err = _obj.templ.pro(tar, K, pose, prob, thetaT, _isLocalTracking ? FLT_MAX : errT, _usePointMatches);
 		//float err = 1.f;
 
 		tarPose = _descalePose(pose);
