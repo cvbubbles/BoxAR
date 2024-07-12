@@ -5,18 +5,19 @@ _STATIC_BEG
 
 void test_ardetectors()
 {
-	//app()->setTempDir("D:/projects/boxar");
 
 	app()->setTempDir(TMPDIR);
 
 	ff::setCurrentDirectory(INPUTDIR);
 
-	//ff::setCurrentDirectory("E:\\ZJR\\summer\\new\\new");
-
-	//std::string modelFile = "E:\\ZJR\\summer\\BoxAR-ar\\BoxAR\\model\\mesh.obj", videoFile = "E:\\ZJR\\summer\\BoxAR\\BoxAR\\video\\test1_video\\test1_1.mp4";
+	//这是你的模型文件和视频文件
 	std::string modelFile = "./BoxAR/model/test1/mesh.obj", videoFile = "./BoxAR/video/test1_video/test1_1.mp4";
-	//string obj_path = "E:\\ZJR\\summer\\flower\\test.obj";
-
+	
+	//！！这是你要渲染的模型的obj文件的相对路径，你也可以直接使用绝对路径，
+	//！！注意路径不要使用正斜杠/，否则会发生一些问题
+	
+	string obj_path = ".\\flower\\test.obj";
+	
 	//config model-set
 	ModelSet models;
 
@@ -46,26 +47,28 @@ void test_ardetectors()
 
 
 	int fi = 0;
-	//����ʱ�䡢��Ⱦʱ��
+	//跟踪时间、渲染时间
 	int totalTrackingTime = 0;
 	int totalRenderTime = 0;
 	int frameCount = 0;
 	Mat img;
+
+	//以下是要输出的视频文件
 	int fourcc = CV_FOURCC('M', 'P', '4', '2');
 	VideoWriter writer(R"(output1000_phong.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
 		720), true);
-	VideoWriter writer2(R"(output1000_input.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
+	/*VideoWriter writer2(R"(output1000_input.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
 		720), true);
 	VideoWriter writer3(R"(output1000_tracker.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
-		720), true);
+		720), true);*/
 	//string obj_path = R"(./flower/flower/test.obj)";
-	string obj_path = "D:/ARsystem/data/flower/flower/test.obj";
+
 
 	cv::Matx44f mProjection;
 	cv::Matx44f mView;
 
 
-	// glfw: initialize and configure
+	// 初始化glfw
    // ------------------------------
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -75,6 +78,8 @@ void test_ardetectors()
 #ifdef __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
+
+	//读视频流的第一帧来确定窗口大小
 	Mat frame1;
 	cap.read(frame1);
 	GLFWwindow* window = glfwCreateWindow(frame1.cols, frame1.rows, "", NULL, NULL);
@@ -87,7 +92,7 @@ void test_ardetectors()
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	// Initialize GLAD
+	// 初始化glad
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		exit(-1);
@@ -102,22 +107,11 @@ void test_ardetectors()
 	// build and compile shaders
 	// -------------------------
 	//Shader testShader("./glrender/vertex.glsl", "./glrender/frag.glsl");
-	Shader testShader("D:/ARsystem/BoxAR/BoxAR/glrender/vertex.glsl", "D:/ARsystem/BoxAR/BoxAR/glrender/frag.glsl");
+	Shader testShader("vertex.glsl", "frag.glsl");
 	MModel mModel(obj_path);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	//glfwMakeContextCurrent(window);
-	//glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-	// glad: load all OpenGL function pointers
-	// ---------------------------------------
-	/*if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		exit(-1);
-	}*/
-	//������Ƶ��
+	//重置视频流
 	cap.set(cv::CAP_PROP_POS_FRAMES, 0);
 	while (cap.read(img))
 	{
@@ -141,9 +135,10 @@ void test_ardetectors()
 		int trackingTime = int(clock() - beg);
 		totalTrackingTime += trackingTime;
 		frameCount++;
-		//printf("\rdector_time=%d      ", trackingTime);
+
+
 		time_t ren_beg = clock();
-		//show results
+		//开始渲染
 
 		cv::Mat1f returnDepth;
 
@@ -163,10 +158,6 @@ void test_ardetectors()
 
 
 				mView = cvrm::fromR33T(pose.R, pose.t);
-
-				//mView = cvrm::fromR33T(pose.R, pose.t);
-
-
 				glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -187,7 +178,7 @@ void test_ardetectors()
 				testShader.setMat4("view", view);
 
 
-				// render the loaded model
+				// 对加载的模型渲染
 				glm::mat4 model = glm::mat4(1.0f);
 
 				testShader.setMat4("model", model);
@@ -219,7 +210,7 @@ void test_ardetectors()
 
 		++fi;
 	}
-	// ���㲢���ƽ������ʱ��
+	// 计算并输出平均跟踪时间
 	if (frameCount > 0) {
 		double avgTrackingTime = static_cast<double>(totalTrackingTime) / frameCount;
 		std::cout << "\nAverage tracking time per frame: " << avgTrackingTime << " ms" << std::endl;
