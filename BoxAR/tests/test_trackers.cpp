@@ -5,20 +5,20 @@ _STATIC_BEG
 
 void test_detectors()
 {
-	app()->setTempDir("e:/boxar/");
 
-	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/");
+	app()->setTempDir("D:/projects/boxar");
 
-	//std::string modelFile = R"(.\scan\3ds-model\bottle2\bottle2.ply)", videoFile = R"(.\BoxAR\video\bottle2-5.avi)";
-	//std::string modelFile = R"(.\scan\3ds-model\bottle3\bottle3.ply)", videoFile = R"(.\test\bottle3.mp4)";
-	//std::string modelFile = R"(.\test\3d\box1.3ds)", videoFile = R"(.\test\box1.mp4)";
-	//std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
-	std::string modelFile = R"(.\test\3d\car.3ds)", videoFile = R"(.\test\car.mp4)";
+	ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR");
+	//std::string modelFile = "E:\\ZJR\\summer\\new\\qinghuaci\\obj\\qinghuaci.obj", videoFile = "E:\\ZJR\\summer\\new\\qinghuaci\\test2.mp4";
+	//std::string modelFile = R"(./BoxAR/model/test1/mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
+	//std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
+	std::string modelFile = "D:\\ARsystem\\qinghuaci\\obj\\qinghuaci.obj", videoFile = "D:\\ARsystem\\qinghuaci\\test2.mp4";
 	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
 
 	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test2\mesh.obj)", videoFile = R"(.\BoxAR\video\test2_video\test2_1.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test3\mesh.obj)", videoFile = R"(.\BoxAR\video\test3_video\test3_1.mp4)";
+
 
 	//config model-set
 	ModelSet models;
@@ -102,7 +102,7 @@ CMD_END()
 
 void on_model_select_init_pose()
 {
-	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/");
+	ff::setCurrentDirectory("D:/ARsystem/");
 
 	//std::string file = R"(.\test\3d\car.3ds)";
 	std::string file = R"(.\test\3d\box1.3ds)";
