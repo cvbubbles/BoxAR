@@ -63,6 +63,9 @@
     <ClCompile Include="glad.c">
       <Filter>glrender</Filter>
     </ClCompile>
+    <ClCompile Include="tools\calibration.cpp">
+      <Filter>tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\base.h">

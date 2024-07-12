@@ -159,6 +159,7 @@
     <ClCompile Include="tests\test_aruco.cpp" />
     <ClCompile Include="tests\test_trackers.cpp" />
     <ClCompile Include="tests\test_trackers2.cpp" />
+    <ClCompile Include="tools\calibration.cpp" />
     <ClCompile Include="tools\gen_box_model.cpp" />
   </ItemGroup>
   <ItemGroup>

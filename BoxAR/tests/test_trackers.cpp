@@ -5,14 +5,13 @@ _STATIC_BEG
 
 void test_detectors()
 {
+	//set path to your output path
+	app()->setTempDir("D:/projects/boxar");   //example
 
-	app()->setTempDir("D:/projects/boxar");
-
-	ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR");
-	//std::string modelFile = "E:\\ZJR\\summer\\new\\qinghuaci\\obj\\qinghuaci.obj", videoFile = "E:\\ZJR\\summer\\new\\qinghuaci\\test2.mp4";
+	//set path to your current path
+	ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR"); 
 	//std::string modelFile = R"(./BoxAR/model/test1/mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
-	//std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
-	std::string modelFile = "D:\\ARsystem\\qinghuaci\\obj\\qinghuaci.obj", videoFile = "D:\\ARsystem\\qinghuaci\\test2.mp4";
+	std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
 	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
 
 	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
@@ -42,18 +41,22 @@ void test_detectors()
 	cv::VideoCapture cap;
 	cap.open(videoFile);
 	//cap.open(0+cv::CAP_DSHOW);
-
 	//cap.set(CAP_PROP_FRAME_WIDTH, 1280);
 	//cap.set(CAP_PROP_FRAME_HEIGHT, 720);
 
+	
 	float dK[] = {
 		1.324595302424838110e+03, 0.000000000000000000e+00, 6.460060955956646467e+02,
 		0.000000000000000000e+00, 1.330463970754883576e+03, 3.568279021773695945e+02,
 		0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00
 	};
+	/*
+	To do 
 
+
+	*/
 	VideoWriterEx vw;
-	//vw.set("f:/out.mp4", 25);
+	//vw.set("f:/out.mp4", 25);  
 
 	int fi = 0;
 	Mat img;
@@ -159,15 +162,15 @@ CMD_END()
 
 void test_manual_init()
 {
-	app()->setTempDir("e:/boxar/");
+	app()->setTempDir("D:/projects/boxar");
 
-	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/");
+	ff::setCurrentDirectory("D:/ARsystem/");
 
 	//std::string modelFile = R"(.\scan\3ds-model\bottle2\bottle2.ply)", videoFile = R"(.\BoxAR\video\bottle2-5.avi)";
 	//std::string modelFile = R"(.\scan\3ds-model\bottle3\bottle3.ply)", videoFile = R"(.\test\bottle3.mp4)";
-	std::string modelFile = R"(.\test\3d\box1.3ds)", videoFile = R"(.\test\box1.mp4)";
+	//std::string modelFile = R"(.\test\3d\box1.3ds)", videoFile = R"(.\test\box1.mp4)";
 	//std::string modelFile = R"(.\test\3d\box3.3ds)", videoFile = R"(.\test\box3.mp4)";
-	//std::string modelFile = R"(.\test\3d\car.3ds)", videoFile = R"(.\test\car.mp4)";
+	std::string modelFile = R"(.\test\3d\car.3ds)", videoFile = R"(.\test\car.mp4)";
 	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
 
 	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
@@ -189,16 +192,16 @@ void test_manual_init()
 	//init detector
 	ff::CommandArgSet args;
 	//initPose指定初始位姿，格式为[rvec tvec]的6维向量，可以通过"model.select_init_pose"命令获得
-	//args.setArgs("-detector v1.ManualInitor -initPose -0.0125247 -2.20621 -1.21235 -144.611 -324.331 -9.27385");  //car.3ds
-	args.setArgs("-detector v1.ManualInitor -initPose -1.91254 0.477099 1.39522 -329.007 -332.011 214.1");          //box1.3ds
+	args.setArgs("-detector v1.ManualInitor -initPose -0.0125247 -2.20621 -1.21235 -144.611 -324.331 -9.27385");  //car.3ds
+	//args.setArgs("-detector v1.ManualInitor -initPose -1.91254 0.477099 1.39522 -329.007 -332.011 214.1");          //box1.3ds
 
 	tracker->init(&models, &args);
 
 	FrameData fd;
 
 	cv::VideoCapture cap;
-	//cap.open(videoFile);
-	cap.open(0+cv::CAP_DSHOW);
+	cap.open(videoFile);
+	//cap.open(0+cv::CAP_DSHOW);
 
 	//cap.set(CAP_PROP_FRAME_WIDTH, 1280);
 	//cap.set(CAP_PROP_FRAME_HEIGHT, 720);
