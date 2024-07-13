@@ -559,10 +559,11 @@ int calib1(int argc, const char** argv)
 }
 
 void cv_calib_camera()
-{
+{	
+	ff::setCurrentDirectory(INPUTDIR);
 	//calibration - w = 4 - h = 5 - s = 0.025 - o = camera.yml - op - oe
 	//const char* argv[] = { "", "-w=7", "-h=7","-s=0.025", "-o=camera.yml","-op","-oe" }; //using camera
-	const char* argv[] = { "", "-w=7", "-h=7","-s=0.025", "-o=camera.yml","-op","-oe","-V","D:\\ARsystem\\summer\\calib\\test2\\test\\1.mp4"}; //using video
+	const char* argv[] = { "", "-w=7", "-h=7","-s=0.025", "-o=camera.yml","-op","-oe","-V","./calib.mp4"}; //using video
 
 	calib1(sizeof(argv) / sizeof(argv[0]), argv);
 }
