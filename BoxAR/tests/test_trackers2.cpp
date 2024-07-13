@@ -16,7 +16,7 @@ void test_ardetectors()
 	//！！这是你要渲染的模型的obj文件的相对路径，你也可以直接使用绝对路径，
 	//！！注意路径不要使用正斜杠/，否则会发生一些问题
 	
-	string obj_path = ".\\flower\\flower\\test.obj";
+	string obj_path = ".\\flower\\test.obj";
 	
 	//config model-set
 	ModelSet models;
@@ -107,7 +107,7 @@ void test_ardetectors()
 	// build and compile shaders
 	// -------------------------
 	//Shader testShader("./glrender/vertex.glsl", "./glrender/frag.glsl");
-	Shader testShader("..\\BoxAR\\vertex.glsl", "..\\BoxAR\\frag.glsl");
+	Shader testShader(".\\vertex.glsl", ".\\frag.glsl");
 	MModel mModel(obj_path);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

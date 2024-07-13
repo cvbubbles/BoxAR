@@ -23,7 +23,7 @@
 
 ```
 Path/ 
-    BoxAR/
+    BoxAR-vr2024/
         BoxAR.sln
         BoxAR
         README.md
@@ -35,11 +35,11 @@ Path/
     glfw-3.3.4.bin.WIN64/
 ```
 
-- BoxAR是我们的主体项目
+- BoxAR-vr2024是我们的主体项目
 
 - cvf中封装了本项目中使用到的一些函数
 
-- cvfx包含了opencv及常用的第三方库
+- cvfx_new包含了opencv及常用的第三方库
 
 - data中给出了我们的一些模型数据
 
@@ -365,24 +365,31 @@ fd.cameraK = cvrm::defaultK(img.size(), 1.5);
 
 # FAQ
 
-1、如何使用wifi？
+1. 如何使用wifi？
 
-请自行搜索eduroam 本学校相关的政策
+   请自行搜索eduroam 本学校相关的政策
 
-2、无法打开***.dll的情况？
+2. 无法打开***.dll的情况？
 
-是否按照第0章 正确配置D_PATH？
+   是否按照第0章 正确配置D_PATH？
 
-另外，最简单的方式是将cvfx中对应的dll文件复制到第0章提到的项目文件x64的相同文件夹中
+   另外，最简单的方式是将cvfx中对应的dll文件复制到第0章提到的项目文件x64的相同文件夹中
 
-3、编译过程中，如果出现找不到***.lib的情况
+3. 编译过程中，如果出现找不到***.lib的情况
 
-在项目属性->链接器->常规->附加依赖项中把cvfx中对应lib文件的路径添加进去
+   在项目属性->链接器->常规->附加依赖项中把cvfx中对应lib文件的路径添加进去
 
-4、运行过程中，如果出现filesystem异常的情况，则对应修改modelFile和videoFile变量
+4. 运行过程中，如果出现filesystem异常的情况，则对应修改modelFile和videoFile变量
 
-**我们建议采用绝对路径试试看**
+   **我们建议采用绝对路径试试看**
 
-5、配置过程中如果遇到“pop_t：未声明的标识符”，可以参照[链接](https://blog.csdn.net/DLW__/article/details/122329784)修改
+5. 配置过程中如果遇到“pop_t：未声明的标识符”，可以参照[链接](https://blog.csdn.net/DLW__/article/details/122329784)修改
 
-6、请确保构建中没有vcpkg以及其他版本opencv4的影响，不然会有冲突
+6. 一般情况下未定义标识符
+
+   用vs打开后 设置编码格式为`CRLF`
+
+   ![image-20240713113727702](readme_images/image-20240713113727702.png)
+
+7. 请确保构建中没有vcpkg以及其他版本例如opencv4的影响，不然会有冲突。
+
