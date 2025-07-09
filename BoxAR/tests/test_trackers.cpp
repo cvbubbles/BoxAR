@@ -10,8 +10,8 @@ void test_3d_tracking()
 
 	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/test");
 
-	//std::string modelFile = "./3d/box1.3ds", videoFile = "./box1.mp4";
-	  std::string modelFile = "./3d/box2.3ds", videoFile = "./box2.mp4";
+	std::string modelFile = "./3d/box1.3ds", videoFile = "./box1.mp4";
+	//  std::string modelFile = "./3d/box2.3ds", videoFile = "./box2.mp4";
 	//std::string modelFile = "./3d/box3.3ds", videoFile = "./box3.mp4";
 	//std::string modelFile = "./3d/car.3ds", videoFile = "./car.mp4";
 	//std::string modelFile = "./3d/bottle1.3ds", videoFile = "./xx.mp4";
@@ -33,9 +33,13 @@ void test_3d_tracking()
 
 	auto tracker = FrameProc::create("v1.Tracker");
 
-	//init detector
 	ff::CommandArgSet args;
-	args.setArgs("-globalSearch - -usePointMatches - -trackScale 1.0");
+	/*参数配置：
+	* -globalSearch : 使用全局搜索，速度较慢，但是对快速运动更稳定
+	* -usePointMatches : 跟踪时使用内部特征点匹配，对有纹理物体效果明显
+	* -trackScale : 跟踪模块对输入图像的scale系数，如果速度慢可以使用较小的scale
+	*/
+	args.setArgs("-globalSearch - -usePointMatches + -trackScale 1.0");
 
 	tracker->init(&models, &args);
 
@@ -77,7 +81,7 @@ void test_3d_tracking()
 
 		time_t beg = clock();
 		tracker->pro(img, fd);
-		if(fi%10==0)
+		if(fi%12==0)
 			printf("speed=%.1ffps       \n", 1000.0f/int(clock() - beg));
 
 		//show results
