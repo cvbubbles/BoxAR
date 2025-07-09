@@ -1,11 +1,11 @@
 # 第0章 环境配置
 
-> **建议进行配置运行步骤之前，先浏览一遍本说明文档，已经有很多问题在说明文档中提及。**
+> **建议进行配置运行步骤之前，先浏览一遍本说明文档，如果环境配置过程遇到问题可以参考文档末的FAQ。**
 >
 > 以下配置过程基本环境：
 >
 > ​	Windows + VS2019（或VS2019 SDK）
->
+> **没有vs2019的同学可以参考如下链接下载[vs2019](https://link.zhihu.com/?target=https%3A//aka.ms/vs/16/release/vs_community.exe)**
 
 **1.BoxAR相关环境及测试模型、视频下载**：[Google Drive](https://drive.google.com/drive/folders/1lGiHSgc9MeI_1BP4acF2jiftR4JKuJ7t?usp=sharing)
 
