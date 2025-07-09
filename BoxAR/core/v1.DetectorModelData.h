@@ -1,7 +1,7 @@
 #pragma once
 
 #include"vxbase.h"
-#include"base/index.h"
+#include"CVX/bfsio.h"
 
 _VX_BEG(v1)
 
@@ -52,13 +52,9 @@ inline void detectOnModel(const Mat3b& img, std::vector<double>& vScale, std::ve
 			if (!mask.empty())
 				resize(mask, maskL, dsize, 0, 0, CV_INTER_NN);
 		}
-		/*else
-		{
-			imshow("gray", grayL);
-			waitKey();
-		}*/
 	}
 }
+
 
 struct DView
 {
@@ -67,6 +63,8 @@ struct DView
 	std::vector<std::vector<KeyPoint>> kp;
 	std::vector<std::vector<Point3f>>  kp3;
 	std::vector<Mat> desc;
+
+	DEFINE_BFS_IO_3(DView, kp, kp3, desc)
 public:
 	void detect()
 	{
@@ -104,12 +102,16 @@ struct DPoint
 inline void getPoints(const std::vector<DView>& views, int level, std::vector<DPoint>& pts, Mat& desc)
 {
 	size_t npt = 0;
+	int descCols = 0;
 	for (auto& v : views)
+	{
 		npt += v.kp3[level].size();
+		descCols = __max(descCols, v.desc[level].cols);
+	}
 
 	pts.resize(npt);
 
-	desc.create(npt, views.front().desc[level].cols, views.front().desc[level].type());
+	desc.create(npt, descCols, views.front().desc[level].type());
 	int descRowSize = desc.elemSize() * desc.cols;
 
 	size_t k = 0;
@@ -144,6 +146,8 @@ inline void selPoints(const std::vector<DPoint>& pts, const Mat& ptsDesc, std::v
 	//int nSel = 10000;
 
 	//printf("build index...\n");
+
+#if 0
 	FMIndex knn;
 	knn.build(ptsDesc, FMIndex::LSH);
 
@@ -151,6 +155,21 @@ inline void selPoints(const std::vector<DPoint>& pts, const Mat& ptsDesc, std::v
 	Mat1i indices;
 	Mat1i dists;
 	knn.knnSearch(ptsDesc, indices, dists, K);
+#else
+	cv::flann::LshIndexParams indexParams(
+		12,  // table_number: 哈希表数量
+		20,  // key_size: 哈希键大小
+		2    // multi_probe_level: 多探针级别
+	);
+
+	cv::flann::Index flannIndex(ptsDesc, indexParams);
+
+	cv::Mat indices;
+	cv::Mat dists;
+
+	// 执行搜索
+	flannIndex.knnSearch(ptsDesc, indices, dists, K, cv::flann::SearchParams());
+#endif
 
 	dmax *= dmax;
 
@@ -319,6 +338,7 @@ struct Builder
 	std::vector<DView> views;
 	std::vector<Vec3f> viewVecs;
 
+	DEFINE_BFS_IO_2(Builder, views, viewVecs)
 public:
 	void renderViews(CVRModel& model, int nViews, Size viewSize)
 	{
@@ -475,7 +495,7 @@ public:
 		_du = 2 * CV_PI / (nU - 1);
 		_dv = CV_PI / (nV - 1);
 	}
-	_View& getView(const Vec3f& dir)
+	int getViewIndex(const Vec3f& dir)
 	{
 		CV_Assert(fabs(dir.dot(dir) - 1) < 1e-6f);
 
@@ -485,7 +505,15 @@ public:
 
 		int size = sizeof(_views);
 
-		return _views[_uvIndex(vi, ui)];
+		return _uvIndex(vi, ui);
+	}
+	_View& getView(const Vec3f& dir)
+	{
+		return _views[getViewIndex(dir)];
+	}
+	_View& getView(int viewIndex)
+	{
+		return _views[viewIndex];
 	}
 	void getSubset(std::vector<int>& selClusters, const Vec3f& dir, Size objSize, int levelHWSZ = 1)
 	{
@@ -518,6 +546,7 @@ public:
 class ModelPoints
 {
 public:
+	Builder               builder;
 	std::vector<Point3f>  modelPts;
 	Mat                   ptsDesc;
 	std::vector<int>      vLevels;
@@ -528,15 +557,33 @@ public:
 	ClusterIndex      clusterIndex;
 	Point3f                    modelCenter;
 
-	DEFINE_BFS_IO_8(ModelPoints,modelPts,ptsDesc,vLevels,nLevels,clusters,ptsCluster,clusterIndex, modelCenter)
+
+	DEFINE_BFS_IO_9(ModelPoints, builder, modelPts, ptsDesc, vLevels, nLevels, clusters, ptsCluster, clusterIndex, modelCenter)
 private:
-	FMIndex               matcher;
+	std::shared_ptr<cv::flann::Index>               matcher;
 	std::vector<int>      matcherSubsetIndex;
 	Mat                   matcherSelDesc;
 public:
+	void _match(const cv::Mat& queryDesc, std::vector<cv::DMatch>& matches)
+	{
+		const int np = queryDesc.rows;
+		cv::Mat1i idx, dist;
+		matcher->knnSearch(queryDesc, idx, dist, 1);
+
+		//printf("np=%d\n", idx.rows);
+
+		matches.resize(np);
+		for (int i = 0; i < np; ++i)
+		{
+			auto& m(matches[i]);
+			m.queryIdx = i;
+			m.trainIdx = *idx.ptr<int>(i);
+			m.distance = *dist.ptr<int>(i);
+		}
+	}
 	void findMatch(const Mat& queryDesc, std::vector<DMatch>& matches)
 	{
-		matcher.match(queryDesc, matches);
+		this->_match(queryDesc, matches);
 		if (!matcherSubsetIndex.empty())
 		{
 			for (auto& m : matches)
@@ -664,6 +711,13 @@ private:
 		if (endLevel < startLevel)
 			endLevel = nLevels - 1;
 
+		static cv::flann::LshIndexParams indexParams(
+			12,  // table_number: 哈希表数量
+			20,  // key_size: 哈希键大小
+			1    // multi_probe_level: 多探针级别
+		);
+		this->matcher = std::make_shared<cv::flann::Index>();
+
 		if (endLevel - startLevel < nLevels - 1)
 		{
 			std::vector<std::vector<int>> vLevelPts(nLevels);
@@ -698,15 +752,12 @@ private:
 					++k;
 				}
 			}
-			matcher.build(selDesc, FMIndex::LSH, "-probes 1");
+			matcher->build(selDesc, indexParams);
 			matcherSelDesc = selDesc;
-			//modelPts.swap(selPts);
-			//vLevels.swap(selLevels);
-			//ptsDesc = selDesc;
 		}
 		else
 		{
-			matcher.build(ptsDesc, FMIndex::LSH, "-probes 1");
+			matcher->build(ptsDesc, indexParams);
 			matcherSubsetIndex.clear();
 		}
 	}
@@ -731,7 +782,7 @@ public:
 
 		//this->load("./temp._");
 
-		Builder builder;
+		//Builder builder;
 		if (modelPts.empty())
 			builder.build(model, modelPts, vLevels, ptsDesc, selPtK, nViews, viewSize);
 		else
@@ -804,7 +855,34 @@ public:
 		if (selIndex)
 			selIndex->swap(selPointsIndex);
 	}
-	void loadFromStream(StreamPtr streamPtr, Model &model, bool forceRebuild)
+
+	void getViewFeatures(const Matx44f& mModelView, bool isRigid, Size objSize, std::vector<Point3f>& selPoints, Mat& selDesc, int levelHWSZ = 1)
+	{
+		Vec3f dv = getOpticalAxis(mModelView, this->modelCenter, isRigid);
+		dv = normalize(dv);
+		int viewIndex = clusterIndex.getViewIndex(dv);
+		auto& view = builder.views[viewIndex];
+		auto& _view = clusterIndex.getView(viewIndex);
+
+		int startLevel, endLevel;
+
+		float objSize1 = sqrt(float(objSize.width * objSize.width + objSize.height * objSize.height));
+		_view.estimateLevel(startLevel, endLevel, objSize1, levelHWSZ);
+
+		selPoints.clear();
+		selPoints.reserve(1000);
+		std::vector<Mat>  vdescs;
+		for (int i = startLevel; i <= endLevel; ++i)
+		{
+			auto& vp = view.kp3[i];
+			selPoints.insert(selPoints.end(), vp.begin(), vp.end());
+			vdescs.push_back(view.desc[i]);
+		}
+		cv::vconcat(vdescs, selDesc);
+		CV_Assert(selPoints.size() == selDesc.rows);
+	}
+
+	void loadFromStream(StreamPtr streamPtr, Model& model, bool forceRebuild)
 	{
 		CV_Assert(streamPtr);
 
@@ -812,7 +890,7 @@ public:
 		{
 			std::string versionCode = model.getInfos().versionCode;
 
-			if(!streamPtr->HeadMatched(versionCode)||forceRebuild)
+			if (!streamPtr->HeadMatched(versionCode) || forceRebuild)
 			{
 				ff::ArgSet args;
 				this->build(model.get3DModel(), args);
@@ -833,7 +911,7 @@ public:
 class DetectorModelData
 	:public Model::ManagedObject
 {
-	DEFINE_RE3D_TYPE2(DetectorModelData, "v1.DetectorModelData")
+	DEFINE_RE3D_TYPE2(DetectorModelData, "v1.1.DetectorModelData")
 public:
 	ModelPoints   modelPoints;
 public:

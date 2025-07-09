@@ -1,19 +1,23 @@
 
 #include"cmdstd.h"
-#include"opencv2/aruco.hpp"
+
+//#include"opencv2/aruco.hpp"
+#if 0
+#include"opencv2/objdetect/aruco_detector.hpp"
+#include"opencv2/objdetect/aruco_dictionary.hpp"
 
 _STATIC_BEG
 
 void test_create_aruco_dict()
 {
 	//cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::generateCustomDictionary(36, 5);
-	cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50);
+	cv::aruco::Dictionary dict = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50);
 
 	//for (int i = 0; i < dict->bytesList.rows; ++i)
 	for (int i = 0; i < 5; ++i)
 	{
 		Mat img;
-		dict->drawMarker(i, 512, img);
+		//dict.drawMarker(i, 512, img);
 		imshow("marker", img);
 
 		std::string file = cv::format("../data/aruco/%03d.png", i + 1);
@@ -32,10 +36,13 @@ CMD_END()
 
 void test_aruco_ar()
 {
-	cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50);
+	cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50);
+	cv::aruco::ArucoDetector detector;
+	detector.setDictionary(dictionary);
 
 	cv::VideoCapture inputVideo;
-	inputVideo.open(0+cv::CAP_DSHOW);
+	//inputVideo.open(0+cv::CAP_DSHOW);
+	inputVideo.open("e:/output.mp4");
 
 	//inputVideo.set(CAP_PROP_FRAME_WIDTH, 1280);
 	//inputVideo.set(CAP_PROP_FRAME_HEIGHT, 720);
@@ -49,12 +56,15 @@ void test_aruco_ar()
 	/*cv::Matx33f cameraMatrix = { 5.2093072503417386e+02, 0., 3.2627544281606572e+02, 0.,
 	   5.2164480491819393e+02, 2.4303275400142539e+02, 0., 0., 1. };*/
 
-	std::string modelDir = R"(D:/ARsystem/test/3d/)";
+	std::string modelDir = R"(F:\SDUicloudCache\re3d\test\3d\)";
 	
 	float markerSize = 0.1f; //marker的实际尺寸，单位米
-	float objectSize = 0.05f; //物体的大小，单位米
+	float objectSize = 0.15f; //物体的大小，单位米
 
-	CVRModel model0(modelDir + "cat.obj");
+	//CVRModel model0(modelDir + "cat.obj");
+	CVRModel model0("e:/chair.fbx");
+	auto center = model0.getCenter();
+	auto bbsize = model0.getSizeBB();
 	auto initT0 = model0.getUnitize()*cvrm::scale(objectSize); //getUnitize将获得一个变换：把物体中心平移到原点，并把大小归一化为1
 
 	CVRModel model1(modelDir + "bunny.3ds");
@@ -67,30 +77,38 @@ void test_aruco_ar()
 	{
 		image = image.clone();
 
-		auto param = aruco::DetectorParameters::create();
+		//auto param = aruco::DetectorParameters::create();
 		//param->cornerRefinementMethod = aruco::CORNER_REFINE_CONTOUR;
 		//param->adaptiveThreshWinSizeMin = 7;
 		
-		time_t beg = clock();
+		time_t beg = clock(); 
 		std::vector<int> ids;
 		std::vector<std::vector<cv::Point2f>> corners;
-		cv::aruco::detectMarkers(image, dictionary, corners, ids, param); //检测markers
+		detector.detectMarkers(image, corners, ids); //检测markers
 
 		// if at least one marker detected
 		if (ids.size() > 0) 
 		{
-			//cv::aruco::drawDetectedMarkers(image, corners, ids);
-			std::vector<cv::Vec3d> rvecs, tvecs;
-			cv::aruco::estimatePoseSingleMarkers(corners, markerSize, cameraMatrix, Mat(), rvecs, tvecs); //估计markers和相机的相对位姿
+			cv::aruco::drawDetectedMarkers(image, corners, ids);
+			std::vector<cv::Vec3d> rvecs(ids.size()), tvecs(ids.size());
+			//cv::aruco::estimatePoseSingleMarkers(corners, markerSize, cameraMatrix, Mat(), rvecs, tvecs); //估计markers和相机的相对位姿
 
 			CVRModelArray modelArray(ids.size()); //包含多个模型的场景
 			
 			for (int i = 0; i < ids.size(); i++)
 			{
+				static Vec3d rvec, tvec;
+				{
+					std::vector<Point3f>  modelPoints = { {0.f,0.f,0.f},{0.f,markerSize,0.f},{markerSize,markerSize,0.f},{markerSize,0.f,0.f} };
+					cv::solvePnP(modelPoints, corners[i], cameraMatrix, Mat(), rvec, tvec, true);
+				}
+
 				int id = ids[i];
 				modelArray[i].model = id%2==0? model0 : model1;   //根据id设置模型
 				modelArray[i].mModeli = id%2==0? initT0 : initT1;  //设置对应模型的初始变换
-				modelArray[i].mModel = cvrm::fromRT(rvecs[i], tvecs[i]); //应用当前R, t
+				modelArray[i].mModel = cvrm::fromRT(rvec, tvec); //应用当前R, t
+
+				cout << rvec << tvec << endl;
 			}
 			
 			CVRMats mats;
@@ -107,7 +125,7 @@ void test_aruco_ar()
 
 
 		cv::imshow("out", image);
-		char key = (char)cv::waitKey(5);
+		char key = (char)cv::waitKey(100);
 		if (key == 27)
 			break;
 	}
@@ -121,3 +139,4 @@ CMD_END()
 
 _STATIC_END
 
+#endif 

@@ -126,6 +126,7 @@ class Frame
 {
 public:
 	Mat					 img;
+	Mat                  imgScaled;
 	std::vector<DPose>   poseTracked;
 	std::vector<DPose>   poseDetected;
 	bool        locked = false;
@@ -142,6 +143,7 @@ private:
 	std::deque<Frame>                 _frames;
 	ff::Thread                        _bgThread;
 	Frame* _detectedFrame = nullptr;
+	double _trackScale = 1.0;
 public:
 	virtual void init(ModelSet* modelSet, ArgSet* args)
 	{
@@ -156,10 +158,12 @@ public:
 				auto md = _modelSet->getModel(i);
 
 				models[i].baseTracker.loadModel(*md, args->getArgStr());
-
-				//models[i].baseTracker2.loadModel(*md, "");
 			}
 			_models.swap(models);
+		}
+		if (args)
+		{
+			_trackScale = args->getd<double>("trackScale", 1.0);
 		}
 		_frames.clear();
 	}
@@ -193,7 +197,7 @@ public:
 			{
 				int imodel = obj.imodel;
 				RigidPose tarPose;
-				_models[imodel].baseTracker.track(_detectedFrame->img, obj.pose, cur.img, tarPose, K);
+				_models[imodel].baseTracker.track(_detectedFrame->imgScaled, obj.pose, cur.imgScaled, tarPose, cvrm::scaleK(K,float(cur.imgScaled.rows)/cur.img.rows));
 				DPose t;
 				t.imodel = imodel;
 				t.pose = tarPose;
@@ -214,7 +218,6 @@ public:
 
 	virtual int pro(const Mat& img, FrameData& fd, ff::ArgSet* args)
 	{
-		//cout << "tracker pro" << endl;
 		_frames.push_back(Frame());
 		auto& cur = _frames.back();
 		cur.img = img.clone();
@@ -224,12 +227,15 @@ public:
 		bool waitBg = false;
 		PoseScore poseScore(img);
 
+		float scale = _trackScale;
+		auto Kscaled = cvrm::scaleK(fd.cameraK, scale);
+		cur.imgScaled=imscale(img, scale);
+
 		if (_bgThread.isIdle())
 		{
 			if (!_detectedFrame)
 			{
 				cur.locked = true;
-				//std::cout << "test _detect branchbbranch" << std::endl;
 				_bgThread.post([this, &fd, &cur]() {
 
 					this->_detect(cur, fd.cameraK);
@@ -256,7 +262,7 @@ public:
 				if (!prev.poseTracked[i].isTracked())
 					continue;
 				RigidPose pose;
-				if (_models[i].baseTracker.track(img, pose, fd.cameraK))
+				if (_models[i].baseTracker.track(cur.imgScaled, pose, Kscaled))
 				{
 					pose.score = poseScore.getScore(&_models[i].baseTracker, pose, fd.cameraK);
 
@@ -279,7 +285,7 @@ public:
 				{
 					*t = d;
 
-					_models[d.imodel].baseTracker.reset(cur.img, d.pose, fd.cameraK);
+					_models[d.imodel].baseTracker.reset(cur.imgScaled, d.pose, Kscaled);
 				}
 			}
 		}

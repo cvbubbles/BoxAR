@@ -4,9 +4,11 @@
 #include"tracker_utils.h"
 #include<queue>
 #include"v1.DetectorModelData.h"
-#include"opencv2/xfeatures2d.hpp"
+//#include"opencv2/xfeatures2d.hpp"
 #include"BFC/thread.h"
-#include"opencv2/optflow.hpp"
+//#include"opencv2/optflow.hpp"
+#include"CVRender/cvrender.h"
+#include<thread>
 
 _VX_BEG(v1)
 
@@ -378,7 +380,7 @@ struct  PointMatch
 
 struct Optimizer
 {
-public:	
+public:
 	std::vector<PointMatch>  _pointMatches;
 
 
@@ -834,7 +836,7 @@ public:
 		const float fx = K(0, 0), fy = K(1, 1);
 
 		auto* vcp = &cpoints[0];
-		int npt =  (int)cpoints.size();
+		int npt = (int)cpoints.size();
 
 		Matx66f JJ = Matx66f::zeros();
 		Vec6f J(0, 0, 0, 0, 0, 0);
@@ -896,7 +898,7 @@ public:
 
 		int npm = (int)_pointMatches.size();
 		float ws = __min(float(npm) / 50.f, 3.f);
-		float wpm =  float(npt) / (float(npm) + 1e-3f) * ws;
+		float wpm = float(npt) / (float(npm) + 1e-3f) * ws;
 		//wpm = 1.f;
 
 		for (int i = 0; i < npm; ++i)
@@ -940,7 +942,7 @@ public:
 			JJ += w * j * j.t();
 		}
 
-		const float lambda = 5000.f * (npt + npm*ws) / 200.f;
+		const float lambda = 5000.f * (npt + npm * ws) / 200.f;
 
 		for (int i = 0; i < 3; ++i)
 			JJ(i, i) += lambda * 100.f;
@@ -989,7 +991,7 @@ public:
 		Point3f pt;
 		float   w;
 	};
-	std::vector<ModelPoint> getModelPoints(CVRender& render, Pose& pose, const Matx33f& K, Size imgSize, Rect roi, int maxPoints=5000)
+	std::vector<ModelPoint> getModelPoints(CVRender& render, Pose& pose, const Matx33f& K, Size imgSize, Rect roi, int maxPoints = 5000)
 	{
 		CVRMats mats;
 		mats.mModel = cvrm::fromR33T(pose.R, pose.t);
@@ -1003,7 +1005,7 @@ public:
 		cv::Sobel(rgray, dy, CV_16S, 0, 1);
 		Mat1b edges;
 		cv::Canny(dx, dy, edges, 20, 20);
-		
+
 		int nedgePoint = 0;
 		for_each_1(DWHN1(edges), [&nedgePoint](uchar m) {
 			if (m != 0)
@@ -1038,7 +1040,7 @@ public:
 			p.w /= wsum;
 		return points;
 	}
-	Mat1f getImageField(Mat img, int nLayers=2)
+	Mat1f getImageField(Mat img, int nLayers = 2)
 	{
 		img = cv::convertBGRChannels(img, 1);
 
@@ -1054,7 +1056,7 @@ public:
 			return dx;
 		};
 
-		Mat1f f=getF(img,img.size());
+		Mat1f f = getF(img, img.size());
 		for (int i = 1; i < nLayers; ++i)
 		{
 			img = imscale(img, 0.5);
@@ -1062,9 +1064,9 @@ public:
 		}
 		float vmax = cv::maxElem(f);
 		f *= 1.f / vmax;
-		return 1.f-f;
+		return 1.f - f;
 	}
-	void operator()(CVRender& render, Pose& pose, const Matx33f& K, Mat img, Rect roi, int nItrs = 10, float eps=1e-6f)
+	void operator()(CVRender& render, Pose& pose, const Matx33f& K, Mat img, Rect roi, int nItrs = 10, float eps = 1e-6f)
 	{
 		//return;
 
@@ -1073,7 +1075,7 @@ public:
 			return;
 
 		std::vector<ModelPoint> modelPoints;
-		std::thread t1([&modelPoints,this,&render,&pose,&K,&img,&roi]() {
+		std::thread t1([&modelPoints, this, &render, &pose, &K, &img, &roi]() {
 			modelPoints = this->getModelPoints(render, pose, K, img.size(), roi);
 			});
 
@@ -1206,18 +1208,18 @@ struct Templates
 	Point3f               modelCenter;
 	std::vector<DView>   views;
 	ViewIndex             viewIndex;
-	
+
 	DetectorModelData* _detectorModelData;
 	float              _modelScale;
-	CVRender*		   _render;
+	CVRender* _render;
 
 	DEFINE_BFS_IO_2(Templates, modelCenter, views)
 
 public:
 	void build(CVRModel& model);
 
-	
-	void loadExt(re3d::Model& model, CVRender *render, float modelScale)
+
+	void loadExt(re3d::Model& model, CVRender* render, float modelScale)
 	{
 		_detectorModelData = model.getManaged<DetectorModelData>();
 		_modelScale = modelScale;
@@ -1266,7 +1268,7 @@ public:
 		return _getNearestView(this->_getViewDir(R, t));
 	}
 
-	Rect getCurROI(const Matx33f &K, const Pose &pose, int *_curView=nullptr)
+	Rect getCurROI(const Matx33f& K, const Pose& pose, int* _curView = nullptr)
 	{
 		Rect curROI;
 		int curView = this->_getNearestView(pose.R, pose.t);
@@ -1281,7 +1283,7 @@ public:
 		return curROI;
 	}
 
-	float pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT, bool usePointMatches);
+	float pro(const Mat& img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT, bool usePointMatches);
 
 	void getProjectedContours(const Matx33f& K, const Pose& pose, std::vector<Point2f>& points, std::vector<Point2f>* normals)
 	{
@@ -1300,10 +1302,10 @@ public:
 		}
 	}
 #if 0
-	void _getModelPoints(const Matx33f& K, Pose pose, const Mat &img, Rect roi, std::vector<Point3f>& points, Mat& desc, Ptr<ORB> &fd)
+	void _getModelPoints(const Matx33f& K, Pose pose, const Mat& img, Rect roi, std::vector<Point3f>& points, Mat& desc, Ptr<ORB>& fd)
 	{
 		CVRMats mats;
-		mats.mModel = cvrm::fromR33T(pose.R, pose.t*_modelScale);
+		mats.mModel = cvrm::fromR33T(pose.R, pose.t * _modelScale);
 		mats.mProjection = cvrm::fromK(K, img.size(), 0.1, 30);
 
 		time_t beg = clock();
@@ -1315,25 +1317,25 @@ public:
 
 		std::vector<KeyPoint> kp;
 
-		
+
 		//auto fdx = cv::AKAZE::create(5, 0, 3, 0.001, 4, 2);
 		fd->detectAndCompute(rr.img, Mat(), kp, desc);
-		
+
 
 		//fd->detectAndCompute(rr.img, Mat(), kp, desc);
 
-		
-		
+
+
 		points.clear();
 		points.reserve(kp.size());
 		CVRProjector prj(rr, img.size());
 		for (auto& p : kp)
 		{
-			points.push_back(prj.unproject(p.pt+Point2f(roi.x,roi.y))/_modelScale);
+			points.push_back(prj.unproject(p.pt + Point2f(roi.x, roi.y)) / _modelScale);
 		}
 	}
 
-	std::vector<PointMatch> calcPointMatches(const Matx33f &K, Pose pose, const Mat &img, Rect roi, Size objSize, float spaceDistT=20.f)
+	std::vector<PointMatch> calcPointMatches(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, float spaceDistT = 20.f)
 	{
 		pose.t *= 1.f / _modelScale;
 
@@ -1349,7 +1351,7 @@ public:
 		printf("nsel=%d\n", selPoints.size());
 
 		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
-		if (roi.empty()||selPoints.empty())
+		if (roi.empty() || selPoints.empty())
 			return std::vector<PointMatch>();
 
 		Mat gray = cv::convertBGRChannels(img(roi), 1);
@@ -1377,7 +1379,7 @@ public:
 
 		//std::sort(matches.begin(), matches.end());
 		//matches.resize(matches.size() / 2);
-		auto minDistance=std::min_element(matches.begin(), matches.end())->distance;
+		auto minDistance = std::min_element(matches.begin(), matches.end())->distance;
 		auto distT = minDistance * 2.f;
 
 		Projector prj(K, pose.R, pose.t);
@@ -1393,7 +1395,7 @@ public:
 
 		for (auto& m : matches)
 		{
-			if (m.distance > distT || uint(m.trainIdx)>selPoints.size())
+			if (m.distance > distT || uint(m.trainIdx) > selPoints.size())
 				continue;
 
 			Point2f q = roiOffset + imKp[m.queryIdx].pt;
@@ -1428,7 +1430,7 @@ public:
 		return pm;
 	}
 #endif
-	void _detectAndCompute(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc)
+	/*void _detectAndCompute2(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc)
 	{
 		Mat gray = cv::convertBGRChannels(img, 1);
 		std::vector<Point2f> corners;
@@ -1437,19 +1439,21 @@ public:
 		kp.resize(corners.size());
 		for (size_t i = 0; i < kp.size(); ++i)
 			kp[i].pt = corners[i];
-		
+
 		auto fdx = cv::xfeatures2d::DAISY::create();
 		fdx->compute(img, kp, desc);
-	}
+	}*/
 
-	void _detectAndCompute2(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc)
+	void _detectAndCompute(const Mat& img, std::vector<KeyPoint>& kp, Mat& desc)
 	{
 		Mat gray = cv::convertBGRChannels(img, 1);
-		
+
 		bool hasLargeRotation = false;
-		auto fd=cv::AKAZE::create(hasLargeRotation ? AKAZE::DESCRIPTOR_MLDB : AKAZE::DESCRIPTOR_MLDB_UPRIGHT,
+		/*auto fd=cv::AKAZE::create(hasLargeRotation ? AKAZE::DESCRIPTOR_MLDB : AKAZE::DESCRIPTOR_MLDB_UPRIGHT,
 			0, 3, 0.001, 4, 4, KAZE::DIFF_PM_G2
-		);
+		);*/
+
+		auto fd = cv::ORB::create(1000, 1.2, 2, 31, 0, 2, cv::ORB::HARRIS_SCORE, 31, 5);
 
 		//std::vector<Point2f> corners;
 		//cv::goodFeaturesToTrack(gray, corners, 200, 0.01, 5);
@@ -1474,18 +1478,19 @@ public:
 		if (data.src.empty() || data.tar.empty())
 			return;
 
-		Mat dimg=visMatch(cvtPoint(data.srcPoints), cvtPoint(data.tarPoints), data.src, data.tar);
+		Mat dimg = visMatch(cvtPoint(data.srcPoints), cvtPoint(data.tarPoints), data.src, data.tar);
 		imshow("matches", dimg);
 	}
 
-	void _getModelPoints(const Matx33f& K, Pose pose, const Mat& img, Rect roi, std::vector<Point3f>& points, Mat& desc, AuxData &auxData)
+	void _getModelPoints(const Matx33f& K, Pose pose, const Mat& img, Rect roi, std::vector<Point3f>& points, Mat& desc, AuxData& auxData)
 	{
+#if 0
 		CVRMats mats;
 		mats.mModel = cvrm::fromR33T(pose.R, pose.t * _modelScale);
 		mats.mProjection = cvrm::fromK(K, img.size(), 0.1, 10);
 
 		auto rr = _render->exec(mats, img.size(), CVRM_IMAGE | CVRM_DEPTH, CVRM_DEFAULT, nullptr, roi);
-		
+
 		std::vector<KeyPoint> kp;
 
 		this->_detectAndCompute(rr.img, kp, desc);
@@ -1499,11 +1504,16 @@ public:
 			auxData.srcPoints.push_back(p.pt);
 		}
 		auxData.src = rr.img;
+#else
+		cv::Matx44f mv = cvrm::fromR33T(pose.R, pose.t, true);
+		//_detectorModelData->modelPoints.getSubsetWithView(mv, true, roi.size(), points, desc, 2);
+		_detectorModelData->modelPoints.getViewFeatures(mv, true, roi.size(), points, desc, 2);
+#endif
 	}
-	std::vector<PointMatch> calcPointMatches(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, AuxData &auxData, float spaceDistT = 20.f)
+	std::vector<PointMatch> calcPointMatches(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, AuxData& auxData, float spaceDistT = 20.f)
 	{
 		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
-		if (roi.empty())
+		if (__min(roi.width, roi.height) < 16)
 			return std::vector<PointMatch>();
 
 
@@ -1511,12 +1521,12 @@ public:
 
 		std::vector<Point3f>  selPoints;
 		Mat selDesc;
-		//AuxData auxData;
 
 		std::thread t1(
-			[this, &K,&pose,&img,&roi,&selPoints,&selDesc, &auxData]() {
+			[this, &K, &pose, &img, &roi, &selPoints, &selDesc, &auxData]() {
 				this->_getModelPoints(K, pose, img, roi, selPoints, selDesc, auxData);
 			});
+
 
 		std::vector<KeyPoint> imKp;
 		Mat imDesc;
@@ -1524,20 +1534,20 @@ public:
 
 		t1.join();
 
-		if (selPoints.size()<10 || imKp.size()<10||selPoints.size()<10)
+		if (selPoints.size() < 10 || imKp.size() < 10 || selPoints.size() < 10)
 			return std::vector<PointMatch>();
 
-		auto matcher = cv::DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
-		//cv::BFMatcher matcher(imDesc.depth() == CV_8UC1 ? NORM_HAMMING : NORM_L2);
+		//auto matcher = cv::DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
+		cv::BFMatcher matcher(imDesc.depth() == CV_8UC1 ? NORM_HAMMING : NORM_L2);
 
 		std::vector<DMatch> matches;
 #if 1
 		std::vector<std::vector<DMatch>> knnMatches;
-		matcher->knnMatch(imDesc, selDesc, knnMatches, 2);
+		matcher.knnMatch(imDesc, selDesc, knnMatches, 2);
 
 		for (auto& km : knnMatches)
 		{
-			if (km[0].distance * 1.1 < km[1].distance)
+			if (km[0].distance * 1.25f < km[1].distance)
 				matches.push_back(km[0]);
 		}
 #else
@@ -1548,7 +1558,7 @@ public:
 		matcher.match(selDesc, imDesc, knnMatchesB);
 		for (auto& km : knnMatches)
 		{
-			if (knnMatchesB[km.trainIdx].trainIdx==km.queryIdx)
+			if (knnMatchesB[km.trainIdx].trainIdx == km.queryIdx)
 				matches.push_back(km);
 		}
 #endif
@@ -1558,8 +1568,9 @@ public:
 
 		std::vector<PointMatch> pm;
 		pm.reserve(matches.size());
+		std::vector<Point2f> srcPoints;
+		srcPoints.reserve(matches.size());
 
-		int n = 0;
 		for (auto& m : matches)
 		{
 			if (/*m.distance > distT ||*/ uint(m.trainIdx) > selPoints.size())
@@ -1576,12 +1587,11 @@ public:
 
 			pm.push_back(tm);
 
-			auxData.srcPoints[n] = auxData.srcPoints[m.trainIdx];
-			auxData.tarPoints.push_back(imKp[m.queryIdx].pt);
-			++n;
+			//srcPoints.push_back(auxData.srcPoints[m.trainIdx]);
+			//auxData.tarPoints.push_back(imKp[m.queryIdx].pt);
 		}
 		auxData.tar = img(roi);
-		auxData.srcPoints.resize(n);
+		//auxData.srcPoints.swap(srcPoints);
 
 		//showMatches(auxData);
 
@@ -1589,11 +1599,11 @@ public:
 
 		return pm;
 	}
-
+#if 0
 	std::vector<PointMatch> calcPointMatches2(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, AuxData& auxData, float spaceDistT = 20.f)
 	{
 		roi = rectOverlapped(roi, Rect(0, 0, img.cols, img.rows));
-		if (roi.empty()||__max(roi.width,roi.height)<100)
+		if (roi.empty() || __max(roi.width, roi.height) < 100)
 			return std::vector<PointMatch>();
 
 		CVRMats mats;
@@ -1634,25 +1644,26 @@ public:
 		corners.resize(n);
 
 		std::vector<PointMatch> matches;
-		
+
 		CVRProjector prj(rr, img.size());
 		for (auto& p : corners)
 		{
 			PointMatch pm;
-			pm.modelPoint=prj.unproject(p + Point2f(roi.x, roi.y));
+			pm.modelPoint = prj.unproject(p + Point2f(roi.x, roi.y));
 			Point2f q = p + flowF.at<Point2f>(int(p.y + 0.5f), int(p.x + 0.5f));
 			pm.imPoint = Point2f(roi.x, roi.y) + q;
 			pm.weight = 1.f;
 			matches.push_back(pm);
 			auxData.tarPoints.push_back(q);
 		}
-		
+
 		auxData.src = rr.img;
 		auxData.tar = img(roi);
 		auxData.srcPoints = corners;
-		
+
 		return matches;
 	}
+#endif
 	//std::vector<PointMatch> calcPointMatches1(const Matx33f& K, Pose pose, const Mat& img, Rect roi, Size objSize, float spaceDistT = 20.f)
 	//{
 	//	pose.t *= 1.f / _modelScale;
@@ -1809,7 +1820,7 @@ inline bool isMainThread()
 }
 
 
-inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT, bool usePointMatches)
+inline float Templates::pro(const Mat& img, const Matx33f& K, Pose& pose, const Mat1f& curProb, float thetaT, float errT, bool usePointMatches)
 {
 	int curView;
 	Rect curROI = this->getCurROI(K, pose, &curView);
@@ -1817,11 +1828,16 @@ inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const 
 	Optimizer dfr;
 	AuxData auxData;
 
-	std::thread t1(
-		[this, &K, &pose, &img, curROI, &dfr, &auxData, usePointMatches]() {
-			if(usePointMatches)
+
+	std::shared_ptr<std::thread> t1;
+	
+	if (usePointMatches)
+	{
+		t1 = std::shared_ptr<std::thread>(new std::thread(
+			[this, &K, &pose, &img, curROI, &dfr, &auxData, usePointMatches]() {
 				dfr._pointMatches = this->calcPointMatches(K, pose, img, curROI, curROI.size(), auxData);
-		});
+			}));
+	}
 
 	Rect roi = curROI;
 	const int dW = 100;
@@ -1830,7 +1846,8 @@ inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const 
 	dfr.computeScanLines(curProb, roi);
 
 	//time_t beg = clock();
-	t1.join();
+	if(t1)
+		t1->join();
 	//printf("\rspeed=%.1ffps       ", 1000.0f / int(clock() - beg));
 
 	//if(isMainThread())
@@ -1937,9 +1954,9 @@ inline float Templates::pro(const Mat &img, const Matx33f& K, Pose& pose, const 
 
 	pose = dpose;
 
-	Refiner refine;
-	curROI = this->getCurROI(K, pose);
-	refine(*_render, pose, K, img, curROI);
+	//Refiner refine;
+	//curROI = this->getCurROI(K, pose);
+	//refine(*_render, pose, K, img, curROI);
 
 	return errMin;
 }
@@ -1986,8 +2003,12 @@ inline void Templates::build(CVRModel& model)
 				int bwy = __min(roi.y, fgMask.rows - roi.y - roi.height);
 				if (__min(bwx, bwy) < 5/* || __max(roi.width,roi.height)<fgMask.cols/4*/)
 				{
+#ifndef __ANDROID__
 					imshow("mask", fgMask);
 					cv::waitKey();
+#else
+					throw std::string("improper rendered image");
+#endif
 				}
 			}
 
@@ -2027,7 +2048,7 @@ private:
 	CVRModel  model;
 	CVRender  render;
 public:
-	void loadModel(StreamPtr streamPtr, re3d::Model &model, float modelScale, bool forceRebuild = false)
+	void loadModel(StreamPtr streamPtr, re3d::Model& model, float modelScale, bool forceRebuild = false)
 	{
 		this->modelFile = model.get3DModel().getFile();
 		this->modelScale = modelScale;
@@ -2190,7 +2211,7 @@ inline float getRDiff(const cv::Matx33f& R1, const cv::Matx33f& R2)
 {
 	cv::Matx33f tmp = R1.t() * R2;
 	float cmin = __min(__min(tmp(0, 0), tmp(1, 1)), tmp(2, 2));
-	float r=acos(cmin);
+	float r = acos(cmin);
 	return isnan(r) ? 0.f : r;
 }
 
@@ -2226,9 +2247,9 @@ class BaseTracker1
 		return { pose.R, pose.t * (1.f / _modelScale) };
 	}
 public:
-	void loadModel(re3d::Model &model, const std::string& argstr)
+	void loadModel(re3d::Model& model, const std::string& argstr)
 	{
-		auto streamPtr = model.getData().getStream("v1.BaseTracker",true);
+		auto streamPtr = model.getData().getStream("v1.BaseTracker", true);
 		_obj.loadModel(streamPtr, model, _modelScale);
 
 		ff::CommandArgSet args(argstr);
@@ -2319,8 +2340,8 @@ public:
 
 		//_cur.pose.t[0] = sqrt(-1);
 
-		auto roi=_obj.templ.getCurROI(K, _cur.pose);
-		double scale = sqrt(200*200 / (double(roi.width) * roi.height) );
+		auto roi = _obj.templ.getCurROI(K, _cur.pose);
+		double scale = sqrt(200 * 200 / (double(roi.width) * roi.height));
 		if (scale < 1.0)
 		{
 			scale = __max(scale, 0.25f);

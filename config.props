@@ -5,7 +5,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros">
     <BIN_PATH>bin-$(PlatformToolset)/$(Platform)/Release/</BIN_PATH>
-    <OPENCV_VER>3413</OPENCV_VER>
+    <OPENCV_VER>490</OPENCV_VER>
     <ASSIMP_VER>501</ASSIMP_VER>
     <D_OPENCV>$(D_CVFX)/opencv$(OPENCV_VER)/</D_OPENCV>
     <D_INCLUDE>$(D_CVF)/;$(D_OPENCV)/include;$(D_CVFX)/freeglut300/include/;$(D_CVFX)/assim$(ASSIMP_VER)/include;$(D_CVFX)/glm0963/include/;$(D_CVFX)/codec10/include/;$(D_CVFX)/libx1/;$(D_CVFX)/glew/include;$(D_CVFX)/vcglib/;$(D_CVFX)/eigen3/;$(D_CVFX)/glfw334/include;</D_INCLUDE>

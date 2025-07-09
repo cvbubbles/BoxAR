@@ -22,6 +22,9 @@
     <Filter Include="tools">
       <UniqueIdentifier>{770c08b1-91a7-4505-bee9-32778e765657}</UniqueIdentifier>
     </Filter>
+    <Filter Include="glrender">
+      <UniqueIdentifier>{a5ae4456-f6d7-4d9c-928c-0b6ce1f584cb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="base\base.cpp">
@@ -53,6 +56,12 @@
     </ClCompile>
     <ClCompile Include="tests\test_aruco.cpp">
       <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_trackers2.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>glrender</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -92,5 +101,43 @@
     <ClInclude Include="core\v1.ManualInitor.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="glrender\backdrawer.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+    <ClInclude Include="glrender\camera.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+    <ClInclude Include="glrender\mesh.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+    <ClInclude Include="glrender\mGLRender.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+    <ClInclude Include="glrender\model.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+    <ClInclude Include="glrender\shader.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+    <ClInclude Include="glrender\shader_m.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+    <ClInclude Include="glrender\stb_image.h">
+      <Filter>glrender</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="glrender\frag.glsl">
+      <Filter>glrender</Filter>
+    </None>
+    <None Include="glrender\texture.fs">
+      <Filter>glrender</Filter>
+    </None>
+    <None Include="glrender\texture.vs">
+      <Filter>glrender</Filter>
+    </None>
+    <None Include="glrender\vertex.glsl">
+      <Filter>glrender</Filter>
+    </None>
   </ItemGroup>
 </Project>

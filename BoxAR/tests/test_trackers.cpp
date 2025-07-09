@@ -6,14 +6,15 @@ _STATIC_BEG
 void test_3d_tracking()
 {
 
-	app()->setTempDir("D:/projects/boxar");
+	//app()->setTempDir("e:/boxar");
 
-	ff::setCurrentDirectory("D:/ARsystem/BoxAR/BoxAR");
-	//std::string modelFile = "E:\\ZJR\\summer\\new\\qinghuaci\\obj\\qinghuaci.obj", videoFile = "E:\\ZJR\\summer\\new\\qinghuaci\\test2.mp4";
-	//std::string modelFile = R"(./BoxAR/model/test1/mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
-	//std::string modelFile = "D:/ARsystem/BoxAR_old/BoxAR/model/test1/mesh.obj", videoFile = "D:/ARsystem/BoxAR_old/BoxAR/video/test1_video/test1_1.mp4";
-	std::string modelFile = "D:\\ARsystem\\qinghuaci\\obj\\qinghuaci.obj", videoFile = "D:\\ARsystem\\qinghuaci\\test2.mp4";
-	//std::string  modelFile = R"(.\scan\3ds-model\plane\plane.ply)";
+	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/test");
+
+	//std::string modelFile = "./3d/box1.3ds", videoFile = "./box1.mp4";
+	  std::string modelFile = "./3d/box2.3ds", videoFile = "./box2.mp4";
+	//std::string modelFile = "./3d/box3.3ds", videoFile = "./box3.mp4";
+	//std::string modelFile = "./3d/car.3ds", videoFile = "./car.mp4";
+	//std::string modelFile = "./3d/bottle1.3ds", videoFile = "./xx.mp4";
 
 	//std::string modelFile = R"(.\BoxAR\model\test1\mesh.obj)", videoFile = R"(.\BoxAR\video\test1_video\test1_1.mp4)";
 	//std::string modelFile = R"(.\BoxAR\model\test2\mesh.obj)", videoFile = R"(.\BoxAR\video\test2_video\test2_1.mp4)";
@@ -34,7 +35,7 @@ void test_3d_tracking()
 
 	//init detector
 	ff::CommandArgSet args;
-	args.setArgs("-globalSearch -usePointMatches");
+	args.setArgs("-globalSearch - -usePointMatches - -trackScale 1.0");
 
 	tracker->init(&models, &args);
 
@@ -63,8 +64,8 @@ void test_3d_tracking()
 		if(img.rows>1000)
 		{
 			img = imscale(img, 0.5);
-			flip(img, img, 0);
-			flip(img, img, 1);
+		//	flip(img, img, 0);
+		//	flip(img, img, 1);
 		}
 
 		if (fi == 0)
@@ -76,7 +77,8 @@ void test_3d_tracking()
 
 		time_t beg = clock();
 		tracker->pro(img, fd);
-		printf("\rspeed=%.1ffps       ", 1000.0f/int(clock() - beg));
+		if(fi%10==0)
+			printf("speed=%.1ffps       \n", 1000.0f/int(clock() - beg));
 
 		//show results
 		Mat dimg = redist::renderResults(img, fd, models, true, true, false, false);

@@ -82,6 +82,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\glad\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\glfw-3.3.4.bin.WIN64\lib-vc2019;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -132,27 +137,36 @@
       <PreprocessorDefinitions>CVRENDER_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>./;../;../include/;$(D_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(D_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>glfw3.lib;$(D_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="base\base.cpp" />
-    <ClCompile Include="base\index.cpp" />
+    <ClCompile Include="base\index.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="base\utils.cpp" />
     <ClCompile Include="core\coreobjs.cpp" />
+    <ClCompile Include="glad.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="impl.cpp" />
     <ClCompile Include="impl_cvrender.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="tests\test_aruco.cpp" />
     <ClCompile Include="tests\test_trackers.cpp" />
+    <ClCompile Include="tests\test_trackers2.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="tools\gen_box_model.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +182,20 @@
     <ClInclude Include="core\v1.Tracker.h" />
     <ClInclude Include="core\vxbase.h" />
     <ClInclude Include="cmdstd.h" />
+    <ClInclude Include="glrender\backdrawer.h" />
+    <ClInclude Include="glrender\camera.h" />
+    <ClInclude Include="glrender\mesh.h" />
+    <ClInclude Include="glrender\mGLRender.h" />
+    <ClInclude Include="glrender\model.h" />
+    <ClInclude Include="glrender\shader.h" />
+    <ClInclude Include="glrender\shader_m.h" />
+    <ClInclude Include="glrender\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="glrender\frag.glsl" />
+    <None Include="glrender\texture.fs" />
+    <None Include="glrender\texture.vs" />
+    <None Include="glrender\vertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

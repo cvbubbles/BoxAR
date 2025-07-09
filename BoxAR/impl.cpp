@@ -17,4 +17,3 @@
 #include"re3d/utils/redist.cpp"
 
 #pragma comment(lib,"assimp-vc142-mt.lib")
-
