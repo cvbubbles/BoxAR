@@ -10,7 +10,7 @@ void test_3d_tracking()
 
 	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/test");
 
-	std::string modelFile = "./3d/box1.3ds", videoFile = "./box1.mp4";
+	std::string modelFile = R"(E:\ZJR\summer\2025cv\data\wogua\wogua.obj)", videoFile = "./box1.mp4";
 	//  std::string modelFile = "./3d/box2.3ds", videoFile = "./box2.mp4";
 	//std::string modelFile = "./3d/box3.3ds", videoFile = "./box3.mp4";
 	//std::string modelFile = "./3d/car.3ds", videoFile = "./car.mp4";
@@ -46,11 +46,11 @@ void test_3d_tracking()
 	FrameData fd;
 
 	cv::VideoCapture cap;
-	cap.open(videoFile);
-	//cap.open(0+cv::CAP_DSHOW);
+	//cap.open(videoFile);
+	cap.open(1+cv::CAP_DSHOW);
 
-	//cap.set(CAP_PROP_FRAME_WIDTH, 1280);
-	//cap.set(CAP_PROP_FRAME_HEIGHT, 720);
+	cap.set(CAP_PROP_FRAME_WIDTH, 640);
+	cap.set(CAP_PROP_FRAME_HEIGHT, 480);
 
 	float dK[] = {
 		1.324595302424838110e+03, 0.000000000000000000e+00, 6.460060955956646467e+02,

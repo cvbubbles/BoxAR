@@ -3,8 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <D_CLOUD>F:\SDUicloudCache\</D_CLOUD>
-    <D_CVF>F:\dev\cvf-01\cvf</D_CVF>
-    <D_CVFX>F:\dev\cvfx\</D_CVFX>
+    <D_CVF>E:\ZJR\summer\2025main\cvf</D_CVF>
+    <D_CVFX>E:\ZJR\summer\2025main\cvfx_new</D_CVFX>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
