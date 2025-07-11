@@ -57,11 +57,14 @@
     <ClCompile Include="tests\test_aruco.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>glrender</Filter>
+    </ClCompile>
     <ClCompile Include="tests\test_trackers2.cpp">
       <Filter>tests</Filter>
     </ClCompile>
-    <ClCompile Include="glad.c">
-      <Filter>glrender</Filter>
+    <ClCompile Include="..\..\glad\src\glad.c">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

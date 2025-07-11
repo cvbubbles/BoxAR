@@ -176,7 +176,6 @@ void test_manual_init()
 	};
 
 	VideoWriterEx vw;
-	//vw.set("f:/out.mp4", 25);
 
 	int fi = 0, waitCode = 0;
 	Mat img;
@@ -193,7 +192,7 @@ void test_manual_init()
 		{
 			//camera intrinsics, here we use a default value
 			fd.cameraK = cvrm::defaultK(img.size(), 1.5);
-			//memcpy(fd.cameraK.val, dK, sizeof(dK));
+		
 		}
 
 		time_t beg = clock();

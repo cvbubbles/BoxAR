@@ -11,7 +11,7 @@ void test_ardetectors()
 	ff::setCurrentDirectory(INPUTDIR);
 
 	//这是你的模型文件和视频文件
-	std::string modelFile = "./BoxAR/model/test1/mesh.obj", videoFile = "./BoxAR/video/test1_video/test1_1.mp4";
+	std::string modelFile = "./qinghuaci/obj/qinghuaci.obj", videoFile = "./qinghuaci/test2.mp4";
 
 	//！！这是你要渲染的模型的obj文件的相对路径，你也可以直接使用绝对路径，
 	//！！注意路径不要使用正斜杠/，否则会发生一些问题
@@ -30,7 +30,6 @@ void test_ardetectors()
 
 	//init detector
 	ff::CommandArgSet args;
-	//args.setArgs("-d2dModelFile f:/sdk/torch_models/model_re3d6_v1.ts -d2dScoreT 0.5");
 	detector->init(&models, &args);
 
 	FrameData fd;
@@ -54,14 +53,9 @@ void test_ardetectors()
 	Mat img;
 
 	//以下是要输出的视频文件
-	int fourcc = CV_FOURCC('M', 'P', '4', '2');
+	int fourcc = cv::VideoWriter::fourcc('M', 'P', '4', '2');
 	VideoWriter writer(R"(output1000_phong.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
 		720), true);
-	/*VideoWriter writer2(R"(output1000_input.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
-		720), true);
-	VideoWriter writer3(R"(output1000_tracker.avi)", fourcc, cap.get(CAP_PROP_FPS), Size(1280,
-		720), true);*/
-		//string obj_path = R"(./flower/flower/test.obj)";
 
 
 	cv::Matx44f mProjection;
@@ -127,7 +121,6 @@ void test_ardetectors()
 		{
 			//camera intrinsics, here we use a default value
 			fd.cameraK = cvrm::defaultK(img.size(), 1.5);
-			//memcpy(fd.cameraK.val, dK, sizeof(dK));
 		}
 
 		time_t beg = clock();
