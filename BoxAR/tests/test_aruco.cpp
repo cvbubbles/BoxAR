@@ -9,10 +9,8 @@ _STATIC_BEG
 
 void test_create_aruco_dict()
 {
-	//cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::generateCustomDictionary(36, 5);
 	cv::aruco::Dictionary dict = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_5X5_50);
-
-	//for (int i = 0; i < dict->bytesList.rows; ++i)
+	ff::setCurrentDirectory(INPUTDIR);
 	for (int i = 0; i < 5; ++i)
 	{
 		Mat img;
@@ -51,18 +49,18 @@ void test_aruco_ar()
 		return;
 
 	cv::Matx33f cameraMatrix=cvrm::defaultK(image.size(),1.5f);
-	/*cv::Matx33f cameraMatrix = { 5.2093072503417386e+02, 0., 3.2627544281606572e+02, 0.,
-	   5.2164480491819393e+02, 2.4303275400142539e+02, 0., 0., 1. };*/
+	//cv::Matx33f cameraMatrix = { 5.2093072503417386e+02, 0., 3.2627544281606572e+02, 0.,
+	//   5.2164480491819393e+02, 2.4303275400142539e+02, 0., 0., 1. };
 
 	ff::setCurrentDirectory(INPUTDIR);
 	std::string modelDir = R"(./test/3d/)";
 	
-	float markerSize = 0.1f; //marker的实际尺寸，单位米
-	float objectSize = 0.15f; //物体的大小，单位米
+	float markerSize = 0.07f; //marker的实际尺寸，单位米
+	float objectSize = 0.01f; //物体的大小，单位米
 
 	CVRModel model0(modelDir + "cat.obj");
-	auto center = model0.getCenter();
-	auto bbsize = model0.getSizeBB();
+	/*auto center = model0.getCenter();
+	auto bbsize = model0.getSizeBB();*/
 	auto initT0 = model0.getUnitize()*cvrm::scale(objectSize); //getUnitize将获得一个变换：把物体中心平移到原点，并把大小归一化为1
 
 	CVRModel model1(modelDir + "bunny.3ds");
@@ -92,14 +90,23 @@ void test_aruco_ar()
 			{
 				static Vec3d rvec, tvec;
 				{
-					std::vector<Point3f>  modelPoints = { {0.f,0.f,0.f},{0.f,markerSize,0.f},{markerSize,markerSize,0.f},{markerSize,0.f,0.f} };
+					std::vector<Point3f>  modelPoints = { {-0.f,0.f,0.f},{0.f,markerSize,0.f},{markerSize,markerSize,0.f},{markerSize,0.f,0.f} };
 					cv::solvePnP(modelPoints, corners[i], cameraMatrix, Mat(), rvec, tvec, true);
 				}
 
 				int id = ids[i];
 				modelArray[i].model = id%2==0? model0 : model1;   //根据id设置模型
 				modelArray[i].mModeli = id%2==0? initT0 : initT1;  //设置对应模型的初始变换
-				modelArray[i].mModel = cvrm::fromRT(rvec, tvec); //应用当前R, t
+				// 计算从中心到左上角的偏移变换
+				cv::Matx44f T_center_to_corner = cvrm::translate(
+					markerSize / 2,  // X方向偏移：中心到左上角
+					markerSize / 2,  // Y方向偏移
+					0               // Z方向不变
+					);
+
+				// 完整的模型变换 = 相机变换 × 中心到左上角 × 模型初始变换
+				modelArray[i].mModel = T_center_to_corner * cvrm::fromRT(rvec, tvec);
+				//modelArray[i].mModel = cvrm::fromRT(rvec, tvec); //应用当前R, t
 
 				cout << rvec << tvec << endl;
 			}

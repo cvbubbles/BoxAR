@@ -6,8 +6,8 @@ int main()
 {
 
 	//跟踪和渲染
-	//exec("test_3d_tracking");
-	exec("test_ardetectors");
+	exec("test_3d_tracking");
+	//exec("test_ardetectors");
 
 	// 无纹理跟踪和渲染
 	//exec("model.select_init_pose");

@@ -1,17 +1,18 @@
 # 第0章 环境配置
 
-> **建议进行配置运行步骤之前，先浏览一遍本说明文档，已经有很多问题在说明文档中提及。**
+> **建议进行配置运行步骤之前，先浏览一遍本说明文档，，如果环境配置过程遇到问题可以参考文档末的FAQ。**
 >
 > 以下配置过程基本环境：
 >
 > ​	Windows + VS2019（或VS2019 SDK）
 >
 
-**1.BoxAR相关环境及测试模型、视频下载**：[Google Drive](https://drive.google.com/drive/folders/1lGiHSgc9MeI_1BP4acF2jiftR4JKuJ7t?usp=sharing)
+**1.BoxAR相关环境及测试模型、视频下载**：[Google Drive](https://drive.google.com/drive/folders/1sEyrZf1I1h5H_WP8OqpFUfHVyJZs5uwS?usp=drive_link)
 
 **2.BoxAR代码下载**
 
-使用`git clone`命令并`git checkout vr2024`切换到**vr2024分支**
+1)使用`git clone`命令并`git checkout summerschool`切换到**summerschool**分支
+2)使用`git clone -b summerschool --single-branch https://github.com/cvbubbles/BoxAR.git`直接拉取**summerschool**分支
 
 **3、文件组织结构**
 
@@ -23,7 +24,7 @@
 
 ```
 Path/ 
-    BoxAR-vr2024/
+    BoxAR/
         BoxAR.sln
         BoxAR
         README.md
@@ -32,7 +33,7 @@ Path/
     cvfx_new/
     data/
     glad/
-    glfw-3.3.4.bin.WIN64/
+    glfw/
 ```
 
 - BoxAR-vr2024是我们的主体项目
@@ -365,31 +366,29 @@ fd.cameraK = cvrm::defaultK(img.size(), 1.5);
 
 # FAQ
 
-1. 如何使用wifi？
-
-   请自行搜索eduroam 本学校相关的政策
-
-2. 无法打开***.dll的情况？
+1. 无法打开***.dll的情况？
 
    是否按照第0章 正确配置D_PATH？
 
    另外，最简单的方式是将cvfx中对应的dll文件复制到第0章提到的项目文件x64的相同文件夹中
 
-3. 编译过程中，如果出现找不到***.lib的情况
+2. 编译过程中，如果出现找不到***.lib的情况
 
    在项目属性->链接器->常规->附加依赖项中把cvfx中对应lib文件的路径添加进去
 
-4. 运行过程中，如果出现filesystem异常的情况，则对应修改modelFile和videoFile变量
+3. 运行过程中，如果出现filesystem异常的情况，则对应修改modelFile和videoFile变量
 
    **我们建议采用绝对路径试试看**
 
-5. 配置过程中如果遇到“pop_t：未声明的标识符”，可以参照[链接](https://blog.csdn.net/DLW__/article/details/122329784)修改
+4. 配置过程中如果遇到“pop_t：未声明的标识符”，可以参照[链接](https://blog.csdn.net/DLW__/article/details/122329784)修改
 
-6. 一般情况下未定义标识符
+5. 一般情况下未定义标识符
 
    用vs打开后 设置编码格式为`CRLF`
 
    ![image-20240713113727702](readme_images/image-20240713113727702.png)
 
-7. 请确保构建中没有vcpkg以及其他版本例如opencv4的影响，不然会有冲突。
+6. 请确保构建中没有vcpkg以及其他版本的影响，不然会有冲突。
+
+7. 在data数据集中，我们提供了一些用于跟踪和ar渲染的模型，这些模型大部分都有实物模型，同学们也可以自行选择实物来建模。
 

@@ -9,7 +9,7 @@ void test_3d_tracking()
 	app()->setTempDir(TMPDIR); 
 	ff::setCurrentDirectory(INPUTDIR);
 
-	std::string modelFile = R"(E:\ZJR\summer\2025cv\data\Mdou_1\Mdou.obj)", videoFile = "./box1.mp4";
+	std::string modelFile = R"(./box/model/mesh.obj)", videoFile = "./box1.mp4";
 	
 
 	//config model-set
@@ -37,11 +37,10 @@ void test_3d_tracking()
 	FrameData fd;
 
 	cv::VideoCapture cap;
-	//cap.open(videoFile);
-	cap.open(1+cv::CAP_DSHOW);
-
-	cap.set(CAP_PROP_FRAME_WIDTH, 640);
-	cap.set(CAP_PROP_FRAME_HEIGHT, 480);
+	cap.open(videoFile);
+	//cap.open(1+cv::CAP_DSHOW);
+	//cap.set(CAP_PROP_FRAME_WIDTH, 640);
+	//cap.set(CAP_PROP_FRAME_HEIGHT, 480);
 
 	float dK[] = {
 		1.324595302424838110e+03, 0.000000000000000000e+00, 6.460060955956646467e+02,
@@ -92,7 +91,8 @@ CMD_END()
 
 void on_model_select_init_pose()
 {
-	ff::setCurrentDirectory("D:/ARsystem/");
+	app()->setTempDir(TMPDIR);
+	ff::setCurrentDirectory(INPUTDIR);
 
 	std::string file = R"(.\test\3d\box1.3ds)";
 
@@ -134,9 +134,8 @@ CMD_END()
 
 void test_manual_init()
 {
-	app()->setTempDir("e:/boxar/");
-
-	ff::setCurrentDirectory("F:/SDUicloudCache/re3d/");
+	app()->setTempDir(TMPDIR);
+	ff::setCurrentDirectory(INPUTDIR);
 
 	
 	std::string modelFile = R"(.\test\3d\box1.3ds)", videoFile = R"(.\test\box1.mp4)";
