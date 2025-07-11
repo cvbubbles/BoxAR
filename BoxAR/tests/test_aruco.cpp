@@ -1,8 +1,7 @@
 
 #include"cmdstd.h"
 
-//#include"opencv2/aruco.hpp"
-#if 0
+
 #include"opencv2/objdetect/aruco_detector.hpp"
 #include"opencv2/objdetect/aruco_dictionary.hpp"
 
@@ -17,10 +16,10 @@ void test_create_aruco_dict()
 	for (int i = 0; i < 5; ++i)
 	{
 		Mat img;
-		//dict.drawMarker(i, 512, img);
+		cv::aruco::generateImageMarker(dict, i, 512, img);
 		imshow("marker", img);
 
-		std::string file = cv::format("../data/aruco/%03d.png", i + 1);
+		std::string file = cv::format("./aruco/%03d.png", i + 1);
 		imwrite(file, img);
 
 		if ('q' == cv::waitKey(10))
@@ -41,11 +40,10 @@ void test_aruco_ar()
 	detector.setDictionary(dictionary);
 
 	cv::VideoCapture inputVideo;
-	//inputVideo.open(0+cv::CAP_DSHOW);
-	inputVideo.open("e:/output.mp4");
+	inputVideo.open(1+cv::CAP_DSHOW);
 
-	//inputVideo.set(CAP_PROP_FRAME_WIDTH, 1280);
-	//inputVideo.set(CAP_PROP_FRAME_HEIGHT, 720);
+	inputVideo.set(CAP_PROP_FRAME_WIDTH, 640);
+	inputVideo.set(CAP_PROP_FRAME_HEIGHT, 480);
 
 	cv::Mat image;
 	inputVideo.read(image);
@@ -56,13 +54,13 @@ void test_aruco_ar()
 	/*cv::Matx33f cameraMatrix = { 5.2093072503417386e+02, 0., 3.2627544281606572e+02, 0.,
 	   5.2164480491819393e+02, 2.4303275400142539e+02, 0., 0., 1. };*/
 
-	std::string modelDir = R"(F:\SDUicloudCache\re3d\test\3d\)";
+	ff::setCurrentDirectory(INPUTDIR);
+	std::string modelDir = R"(./test/3d/)";
 	
 	float markerSize = 0.1f; //marker的实际尺寸，单位米
 	float objectSize = 0.15f; //物体的大小，单位米
 
-	//CVRModel model0(modelDir + "cat.obj");
-	CVRModel model0("e:/chair.fbx");
+	CVRModel model0(modelDir + "cat.obj");
 	auto center = model0.getCenter();
 	auto bbsize = model0.getSizeBB();
 	auto initT0 = model0.getUnitize()*cvrm::scale(objectSize); //getUnitize将获得一个变换：把物体中心平移到原点，并把大小归一化为1
@@ -77,10 +75,6 @@ void test_aruco_ar()
 	{
 		image = image.clone();
 
-		//auto param = aruco::DetectorParameters::create();
-		//param->cornerRefinementMethod = aruco::CORNER_REFINE_CONTOUR;
-		//param->adaptiveThreshWinSizeMin = 7;
-		
 		time_t beg = clock(); 
 		std::vector<int> ids;
 		std::vector<std::vector<cv::Point2f>> corners;
@@ -91,8 +85,7 @@ void test_aruco_ar()
 		{
 			cv::aruco::drawDetectedMarkers(image, corners, ids);
 			std::vector<cv::Vec3d> rvecs(ids.size()), tvecs(ids.size());
-			//cv::aruco::estimatePoseSingleMarkers(corners, markerSize, cameraMatrix, Mat(), rvecs, tvecs); //估计markers和相机的相对位姿
-
+			
 			CVRModelArray modelArray(ids.size()); //包含多个模型的场景
 			
 			for (int i = 0; i < ids.size(); i++)
@@ -138,5 +131,3 @@ CMD_END()
 
 
 _STATIC_END
-
-#endif 

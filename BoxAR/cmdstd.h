@@ -7,6 +7,7 @@
 #include"base/base.h"
 #include"BFC/argv.h"
 #include"re3d/utils/redist.h"
+#include"local.h"
 using namespace cv;
 using namespace ff;
 using namespace boxar;
