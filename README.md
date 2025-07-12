@@ -148,7 +148,7 @@ CMD_END()
 
 在main.cpp中选择`exec("test_3d_tracking")`执行，跟踪算法的测试函数在test_tracker.cpp中，核心算法在core文件夹中。
 
-在test_tracker.cpp中的test_detectors()函数中更改`modelFile`和`videoFile`变量可以选择待跟踪物体模型和测试视频。如果你无法正确加载模型，我们建议采用绝对路径方式试试看。
+在test_tracker.cpp中的test_detectors()函数中更改`modelFile`和`videoFile`变量可以选择待跟踪物体模型和测试视频。跟踪算法也支持用下发的摄像头实时跟踪，你需要阅读代码手动更改相关部分，如果你无法正确加载模型，我们建议采用绝对路径方式试试看。
 
 ![image-20240712114617401](readme_images/image-20240712114617401.png)
 
@@ -390,5 +390,5 @@ fd.cameraK = cvrm::defaultK(img.size(), 1.5);
 
 6. 请确保构建中没有vcpkg以及其他版本的影响，不然会有冲突。
 
-7. 在data数据集中，我们提供了一些用于跟踪和ar渲染的模型，这些模型大部分由实物模型使用**realityscan**建模得到，同学们也可以自行选择实物使用**realityscan**来建模。
+7. 在data数据集中，我们提供了一些用于跟踪和ar渲染的模型，同学们可以借用我们提供的实物模型、使用第四章的方法自己制作模型、也可以自行选择实物使用**realityscan**来建模，相关操作文档可以参看[realityscan](https://dev.epicgames.com/community/learning/tutorials/5wap/realityscan-scan-objects-using-masks-image-masking)。
 
