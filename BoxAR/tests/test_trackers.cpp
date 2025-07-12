@@ -9,7 +9,7 @@ void test_3d_tracking()
 	app()->setTempDir(TMPDIR); 
 	ff::setCurrentDirectory(INPUTDIR);
 
-	std::string modelFile = R"(./box/model/mesh.obj)", videoFile = "./box1.mp4";
+	std::string modelFile = R"(./box/model/mesh.obj)", videoFile = "./box/test1_1.mp4";
 	
 
 	//config model-set
