@@ -30,9 +30,6 @@
     <ClCompile Include="base\base.cpp">
       <Filter>base</Filter>
     </ClCompile>
-    <ClCompile Include="base\index.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
     <ClCompile Include="base\utils.cpp">
       <Filter>base</Filter>
     </ClCompile>
@@ -63,15 +60,18 @@
     <ClCompile Include="glad.c">
       <Filter>glrender</Filter>
     </ClCompile>
+    <ClCompile Include="tests\test_netcall.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\impl_netcall.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\base.h">
       <Filter>base</Filter>
     </ClInclude>
     <ClInclude Include="base\def.h">
-      <Filter>base</Filter>
-    </ClInclude>
-    <ClInclude Include="base\index.h">
       <Filter>base</Filter>
     </ClInclude>
     <ClInclude Include="base\utils.h">

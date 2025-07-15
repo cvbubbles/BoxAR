@@ -151,9 +151,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="base\base.cpp" />
-    <ClCompile Include="base\index.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="base\utils.cpp" />
     <ClCompile Include="core\coreobjs.cpp" />
     <ClCompile Include="glad.c">
@@ -162,7 +159,9 @@
     <ClCompile Include="impl.cpp" />
     <ClCompile Include="impl_cvrender.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="tests\impl_netcall.cpp" />
     <ClCompile Include="tests\test_aruco.cpp" />
+    <ClCompile Include="tests\test_netcall.cpp" />
     <ClCompile Include="tests\test_trackers.cpp" />
     <ClCompile Include="tests\test_trackers2.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -172,7 +171,6 @@
   <ItemGroup>
     <ClInclude Include="base\base.h" />
     <ClInclude Include="base\def.h" />
-    <ClInclude Include="base\index.h" />
     <ClInclude Include="base\utils.h" />
     <ClInclude Include="core\tracker_utils.h" />
     <ClInclude Include="core\v1.BaseTracker1.h" />
